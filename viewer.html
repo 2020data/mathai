@@ -14,26 +14,42 @@
   <div id="navbar"></div>
 
   <main class="max-w-4xl mx-auto px-4 py-8">
-    <div id="headerBox" class="mb-6"></div>
+  <div id="headerBox" class="mb-6"></div>
 
     <!-- 翻譯工具列（僅在純文字/MD/LaTeX 顯示） -->
-    <div id="translateBar" class="hidden bg-white p-4 rounded-xl border mb-6 flex flex-wrap items-center gap-3 text-sm">
-      <span class="font-medium">🌐 即時翻譯：</span>
-      <select id="translateMode" class="border rounded px-2 py-1">
-        <option value="local">地端 API (Local)</option>
-        <option value="cloud">雲端 API (Edge Function)</option>
-      </select>
-      <select id="targetLang" class="border rounded px-2 py-1"></select>
-      <button id="translateBtn" class="bg-slate-800 text-white px-3 py-1 rounded hover:bg-slate-700">翻譯</button>
-      <button id="resetOrigBtn" class="text-blue-600 hover:underline hidden">還原原文</button>
-      <span id="translateStatus" class="text-slate-500"></span>
-    </div>
+    <!-- 取代 viewer.html 中的 #translateBar 與 #contentContainer -->
+    <div id="translateBar" class="hidden bg-white p-4 rounded-xl border mb-6 flex flex-wrap items-center gap-3 text-sm shadow-sm">
+    <span class="font-semibold text-slate-700">🌐 線上翻譯模組：</span>
+      <select id="translateMode" class="border rounded-lg px-2.5 py-1.5 bg-slate-50">
+      <option value="free">免費線上翻譯 (免設定直接用)</option>
+      <option value="cloud">雲端 AI 翻譯 (Supabase Edge Function)</option>
+      <option value="local">地端本機 API (Localhost)</option>
+    </select>
+    <select id="targetLang" class="border rounded-lg px-2.5 py-1.5 bg-slate-50"></select>
+
+    <button id="translateBtn" class="bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition">
+      立即翻譯
+    </button>
+    <button id="bilingualBtn" class="hidden border border-slate-300 text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100">
+      切換雙語對照
+    </button>
+    <button id="resetOrigBtn" class="hidden text-slate-500 hover:text-slate-800 underline">
+      還原原文
+    </button>
+    <span id="translateStatus" class="text-xs text-slate-500 ml-auto"></span>
+  </div>
 
     <article id="contentContainer" class="bg-white p-6 sm:p-8 rounded-xl border shadow-sm">
       <p class="text-slate-400">載入中...</p>
     </article>
   </main>
-
+  <!-- 支援單欄與雙欄對照的內容容器 -->
+<div id="viewerLayout" class="grid grid-cols-1 gap-6">
+  <article id="contentContainer" class="bg-white p-6 sm:p-8 rounded-xl border shadow-sm">
+    <p class="text-slate-400">載入中...</p>
+  </article>
+  <article id="translatedContainer" class="hidden bg-blue-50/30 p-6 sm:p-8 rounded-xl border border-blue-200 shadow-sm"></article>
+</div>
   <script type="module">
     import { mountNavbar } from './components/navbar.js';
     import { APP_CONFIG } from './config/app.config.js';
