@@ -1,3 +1,4 @@
+// modules/db.module.js
 import { supabase, getCurrentUser } from './auth.module.js';
 
 // 取得文章列表（支援分類篩選）
@@ -51,12 +52,12 @@ export async function createPost(postData) {
   if (error) throw error;
   return data;
 }
+
 // 刪除文章（若附帶上傳檔案也會嘗試一併移除）
 export async function deletePost(id, fileUrl = null) {
   const user = await getCurrentUser();
   if (!user) throw new Error('請先登入');
 
-  // 1. 刪除資料庫中的文章紀錄
   const { error } = await supabase
     .from('posts')
     .delete()
@@ -65,7 +66,6 @@ export async function deletePost(id, fileUrl = null) {
 
   if (error) throw error;
 
-  // 2. 若有上傳檔案，嘗試從 Storage 一併清理
   if (fileUrl && fileUrl.includes('/storage/v1/object/public/uploads/')) {
     const filePath = fileUrl.split('/storage/v1/object/public/uploads/')[1];
     if (filePath) {
