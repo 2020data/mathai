@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>上傳內容 - 數學與 AI 知識庫</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen">
+  <div id="navbar"></div>
+
+  <main class="max-w-3xl mx-auto px-4 py-8">
+    <form id="uploadForm" class="bg-white p-6 rounded-xl border space-y-5">
+      <h1 class="text-2xl font-bold">新增內容</h1>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">標題</label>
+        <input id="title" type="text" required class="w-full border rounded-lg px-3 py-2" placeholder="例如：梯度下降法推導" />
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium mb-1">分類</label>
+          <select id="category" class="w-full border rounded-lg px-3 py-2"></select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">原文語系（將以此語言優先顯示）</label>
+          <select id="lang" class="w-full border rounded-lg px-3 py-2"></select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium mb-1">內容類型</label>
+        <select id="mode" class="w-full border rounded-lg px-3 py-2">
+          <option value="text">直接貼上 Markdown / LaTeX 數學公式</option>
+          <option value="file">上傳檔案（PDF / Word .docx / PPT .pptx）</option>
+        </select>
+      </div>
+
+      <div id="textAreaBox">
+        <label class="block text-sm font-medium mb-1">內文（支援 $行內公式$ 與 $$區塊公式$$）</label>
+        <textarea id="rawText" rows="8" class="w-full border rounded-lg p-3 font-mono text-sm"
+          placeholder="# 標題&#10;行內公式：$E = mc^2$&#10;&#10;$$\int_0^\infty e^{-x^2} dx = \frac{\sqrt{\pi}}{2}$$"></textarea>
+      </div>
+
+      <div id="fileBox" class="hidden">
+        <label class="block text-sm font-medium mb-1">選擇檔案</label>
+        <input id="fileInput" type="file" accept=".pdf,.docx,.pptx,.md,.tex" class="w-full border rounded-lg p-2" />
+      </div>
+
+      <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700">
+        發布至網站
+      </button>
+      <p id="statusMsg" class="text-sm text-center"></p>
+    </form>
+  </main>
+
+  <script type="module">
+    import { mountNavbar } from './components/navbar.js';
+    import { CATEGORIES } from './config/categories.config.js';
+    import { APP_CONFIG } from './config/app.config.js';
+    import { getCurrentUser } from './modules/auth.module.js';
+    import { uploadFile, createPost } from './modules/db.module.js';
+
+    mountNavbar();
+
+    // 檢查登入狀態
+    const user = await getCurrentUser();
+    if (!user) {
+      alert('請先登入才能上傳內容');
+      window.location.href = './login.html';
+    }
+
+    // 填入分類與語系選單
+    document.getElementById('category').innerHTML = CATEGORIES.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
+    document.getElementById('lang').innerHTML = APP_CONFIG.LANGUAGES.map(l => `<option value="${l.code}">${l.label}</option>`).join('');
+
+    // 切換輸入模式
+    const modeEl = document.getElementById('mode');
+    modeEl.onchange = () => {
+      document.getElementById('textAreaBox').classList.toggle('hidden', modeEl.value !== 'text');
+      document.getElementById('fileBox').classList.toggle('hidden', modeEl.value !== 'file');
+    };
+
+    // 送出表單
+    document.getElementById('uploadForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submitBtn');
+      const msg = document.getElementById('statusMsg');
+      btn.disabled = true;
+      msg.textContent = '處理中...';
+
+      try {
+        let postData = {
+          title: document.getElementById('title').value.trim(),
+          category: document.getElementById('category').value,
+          original_lang: document.getElementById('lang').value,
+          format: 'markdown',
+          raw_text: null,
+          file_url: null
+        };
+
+        if (modeEl.value === 'text') {
+          postData.raw_text = document.getElementById('rawText').value;
+        } else {
+          const file = document.getElementById('fileInput').files[0];
+          if (!file) throw new Error('請選擇要上傳的檔案');
+          const ext = file.name.split('.').pop().toLowerCase();
+
+          if (ext === 'md' || ext === 'tex') {
+            postData.format = ext === 'tex' ? 'latex' : 'markdown';
+            postData.raw_text = await file.text();
+          } else {
+            const uploaded = await uploadFile(file);
+            postData.format = uploaded.ext;
+            postData.file_url = uploaded.url;
+          }
+        }
+
+        const created = await createPost(postData);
+        window.location.href = `./viewer.html?id=${created.id}`;
+      } catch (err) {
+        msg.textContent = `錯誤：${err.message}`;
+        msg.className = 'text-sm text-center text-red-500';
+        btn.disabled = false;
+      }
+    };
+  </script>
+</body>
+</html>
