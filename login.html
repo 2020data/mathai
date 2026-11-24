@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>登入 - 數學與 AI 知識庫</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col">
+  <div id="navbar"></div>
+
+  <main class="flex-1 flex items-center justify-center px-4">
+    <div class="bg-white p-8 rounded-xl border shadow-sm w-full max-w-md space-y-5">
+      <h1 class="text-2xl font-bold text-center">會員登入 / 註冊</h1>
+      <input id="email" type="email" placeholder="Email 信箱" class="w-full border rounded-lg px-3 py-2" />
+      <input id="password" type="password" placeholder="密碼（至少 6 碼）" class="w-full border rounded-lg px-3 py-2" />
+
+      <div class="flex gap-3">
+        <button id="loginBtn" class="flex-1 bg-slate-800 text-white py-2 rounded-lg hover:bg-slate-700">登入</button>
+        <button id="signupBtn" class="flex-1 border border-slate-300 py-2 rounded-lg hover:bg-slate-100">註冊新帳號</button>
+      </div>
+      <p id="authMsg" class="text-sm text-center"></p>
+    </div>
+  </main>
+
+  <script type="module">
+    import { mountNavbar } from './components/navbar.js';
+    import { signIn, signUp } from './modules/auth.module.js';
+
+    mountNavbar();
+    const msg = document.getElementById('authMsg');
+
+    document.getElementById('loginBtn').onclick = async () => {
+      try {
+        await signIn(document.getElementById('email').value, document.getElementById('password').value);
+        window.location.href = './index.html';
+      } catch (err) {
+        msg.textContent = err.message;
+        msg.className = 'text-sm text-center text-red-500';
+      }
+    };
+
+    document.getElementById('signupBtn').onclick = async () => {
+      try {
+        await signUp(document.getElementById('email').value, document.getElementById('password').value);
+        msg.textContent = '註冊成功！請至信箱點擊驗證連結（或於 Supabase 後台關閉 Email Confirm 直接登入）。';
+        msg.className = 'text-sm text-center text-green-600';
+      } catch (err) {
+        msg.textContent = err.message;
+        msg.className = 'text-sm text-center text-red-500';
+      }
+    };
+  </script>
+</body>
+</html>
