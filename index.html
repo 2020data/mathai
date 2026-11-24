@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>數學與人工智慧知識庫</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+  <div id="navbar"></div>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <!-- 分類篩選按鈕列 -->
+    <div id="categoryBar" class="flex flex-wrap gap-2 mb-6"></div>
+
+    <!-- 一格一格卡片呈現區 -->
+    <div id="cardGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <p class="text-slate-400 col-span-full text-center py-12">載入內容中...</p>
+    </div>
+  </main>
+
+  <script type="module">
+    import { mountNavbar } from './components/navbar.js';
+    import { CATEGORIES, getCategoryById } from './config/categories.config.js';
+    import { fetchPosts } from './modules/db.module.js';
+
+    let activeCategory = 'all';
+
+    function renderCategoryBar() {
+      const bar = document.getElementById('categoryBar');
+      const items = [{ id: 'all', name: '全部內容', icon: '📚' }, ...CATEGORIES];
+
+      bar.innerHTML = items.map(c => `
+        <button data-cat="${c.id}" class="px-4 py-2 rounded-full text-sm font-medium border transition
+          ${activeCategory === c.id ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 hover:bg-slate-100'}">
+          ${c.icon} ${c.name}
+        </button>
+      `).join('');
+
+      bar.querySelectorAll('button').forEach(btn => {
+        btn.onclick = () => {
+          activeCategory = btn.dataset.cat;
+          renderCategoryBar();
+          loadCards();
+        };
+      });
+    }
+
+    async function loadCards() {
+      const grid = document.getElementById('cardGrid');
+      try {
+        const posts = await fetchPosts(activeCategory);
+        if (!posts.length) {
+          grid.innerHTML = `<p class="text-slate-400 col-span-full text-center py-12">此分類目前尚無內容，請登入後上傳第一筆資料。</p>`;
+          return;
+        }
+        grid.innerHTML = posts.map(post => {
+          const cat = getCategoryById(post.category);
+          return `
+            <a href="./viewer.html?id=${post.id}" class="block bg-white rounded-xl border border-slate-200 p-5 hover:shadow-md hover:-translate-y-0.5 transition">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xs px-2.5 py-1 rounded-full border ${cat.badgeClass}">${cat.icon} ${cat.name}</span>
+                <span class="text-xs uppercase font-mono text-slate-400">${post.format} · ${post.original_lang}</span>
+              </div>
+              <h2 class="text-lg font-bold text-slate-800 line-clamp-2 mb-2">${post.title}</h2>
+              <p class="text-xs text-slate-400">發佈於 ${new Date(post.created_at).toLocaleDateString()}</p>
+            </a>
+          `;
+        }).join('');
+      } catch (err) {
+        grid.innerHTML = `<p class="text-red-500 col-span-full text-center py-12">載入失敗：${err.message}（請確認 config/app.config.js 已設定）</p>`;
+      }
+    }
+
+    mountNavbar();
+    renderCategoryBar();
+    loadCards();
+  </script>
+</body>
+</html>
