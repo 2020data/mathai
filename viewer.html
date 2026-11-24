@@ -105,30 +105,71 @@
       // 預設永遠呈現上傳者原文
       await renderPostContent(container, post);
 
-      if (post.format === 'markdown' || post.format === 'latex') {
-        document.getElementById('translateBar').classList.remove('hidden');
+      // ...載入 post 後執行：
+if (post.format === 'markdown' || post.format === 'latex') {
+  document.getElementById('translateBar').classList.remove('hidden');
 
-        document.getElementById('translateBtn').onclick = async () => {
-          const status = document.getElementById('translateStatus');
-          status.textContent = '翻譯中...';
-          try {
-            const mode = document.getElementById('translateMode').value;
-            const target = document.getElementById('targetLang').value;
-            const translated = await translateContent(post.raw_text, target, mode);
-            await renderPostContent(container, post, translated);
-            document.getElementById('resetOrigBtn').classList.remove('hidden');
-            status.textContent = '翻譯完成';
-          } catch (err) {
-            status.textContent = err.message;
-          }
-        };
+  let currentTranslatedText = null;
+  let isBilingual = false;
 
-        document.getElementById('resetOrigBtn').onclick = async () => {
-          await renderPostContent(container, post);
-          document.getElementById('resetOrigBtn').classList.add('hidden');
-          document.getElementById('translateStatus').textContent = '';
-        };
-      }
+  const layout = document.getElementById('viewerLayout');
+  const transBox = document.getElementById('translatedContainer');
+  const status = document.getElementById('translateStatus');
+  const bilingualBtn = document.getElementById('bilingualBtn');
+  const resetBtn = document.getElementById('resetOrigBtn');
+
+  async function refreshView() {
+    if (!currentTranslatedText) {
+      layout.className = 'grid grid-cols-1 gap-6';
+      transBox.classList.add('hidden');
+      await renderPostContent(container, post);
+      return;
+    }
+
+    if (isBilingual) {
+      layout.className = 'grid grid-cols-1 lg:grid-cols-2 gap-6';
+      transBox.classList.remove('hidden');
+      await renderPostContent(container, post);
+      await renderPostContent(transBox, post, currentTranslatedText);
+    } else {
+      layout.className = 'grid grid-cols-1 gap-6';
+      transBox.classList.add('hidden');
+      await renderPostContent(container, post, currentTranslatedText);
+    }
+  }
+
+  document.getElementById('translateBtn').onclick = async () => {
+    status.textContent = '翻譯中（已自動保護數學公式）...';
+    try {
+      const mode = document.getElementById('translateMode').value;
+      const target = document.getElementById('targetLang').value;
+      const { text, fromCache } = await translatePost(post, target, mode);
+
+      currentTranslatedText = text;
+      bilingualBtn.classList.remove('hidden');
+      resetBtn.classList.remove('hidden');
+      status.textContent = fromCache ? '⚡ 已從快取載入譯文' : '✅ 翻譯完成';
+      await refreshView();
+    } catch (err) {
+      status.textContent = `❌ ${err.message}`;
+    }
+  };
+
+  bilingualBtn.onclick = async () => {
+    isBilingual = !isBilingual;
+    bilingualBtn.textContent = isBilingual ? '切換單欄譯文' : '切換雙語對照';
+    await refreshView();
+  };
+
+  resetBtn.onclick = async () => {
+    currentTranslatedText = null;
+    isBilingual = false;
+    bilingualBtn.classList.add('hidden');
+    resetBtn.classList.add('hidden');
+    status.textContent = '';
+    await refreshView();
+  };
+}
     } catch (err) {
       container.innerHTML = `<p class="text-red-500">無法載入內容：${err.message}</p>`;
     }
