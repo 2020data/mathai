@@ -13,43 +13,40 @@
 <body class="bg-slate-50 min-h-screen">
   <div id="navbar"></div>
 
-  <main class="max-w-4xl mx-auto px-4 py-8">
-  <div id="headerBox" class="mb-6"></div>
+  <main class="max-w-5xl mx-auto px-4 py-8">
+    <div id="headerBox" class="mb-6"></div>
 
-    <!-- 翻譯工具列（僅在純文字/MD/LaTeX 顯示） -->
-    <!-- 取代 viewer.html 中的 #translateBar 與 #contentContainer -->
+    <!-- 線上翻譯工具列（僅在純文字/MD/LaTeX 顯示） -->
     <div id="translateBar" class="hidden bg-white p-4 rounded-xl border mb-6 flex flex-wrap items-center gap-3 text-sm shadow-sm">
-    <span class="font-semibold text-slate-700">🌐 線上翻譯模組：</span>
+      <span class="font-semibold text-slate-700">🌐 線上翻譯：</span>
       <select id="translateMode" class="border rounded-lg px-2.5 py-1.5 bg-slate-50">
-      <option value="free">免費線上翻譯 (免設定直接用)</option>
-      <option value="cloud">雲端 AI 翻譯 (Supabase Edge Function)</option>
-      <option value="local">地端本機 API (Localhost)</option>
-    </select>
-    <select id="targetLang" class="border rounded-lg px-2.5 py-1.5 bg-slate-50"></select>
+        <option value="free">免費線上翻譯 (直接用)</option>
+        <option value="cloud">雲端 AI 翻譯 (Supabase)</option>
+        <option value="local">地端本機 API (Localhost)</option>
+      </select>
+      <select id="targetLang" class="border rounded-lg px-2.5 py-1.5 bg-slate-50"></select>
 
-    <button id="translateBtn" class="bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition">
-      立即翻譯
-    </button>
-    <button id="bilingualBtn" class="hidden border border-slate-300 text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100">
-      切換雙語對照
-    </button>
-    <button id="resetOrigBtn" class="hidden text-slate-500 hover:text-slate-800 underline">
-      還原原文
-    </button>
-    <span id="translateStatus" class="text-xs text-slate-500 ml-auto"></span>
-  </div>
+      <button id="translateBtn" class="bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition">
+        立即翻譯
+      </button>
+      <button id="bilingualBtn" class="hidden border border-slate-300 text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100">
+        切換雙語對照
+      </button>
+      <button id="resetOrigBtn" class="hidden text-slate-500 hover:text-slate-800 underline">
+        還原原文
+      </button>
+      <span id="translateStatus" class="text-xs text-slate-500 ml-auto"></span>
+    </div>
 
-    <article id="contentContainer" class="bg-white p-6 sm:p-8 rounded-xl border shadow-sm">
-      <p class="text-slate-400">載入中...</p>
-    </article>
+    <!-- 支援單欄與左右雙語對照的內容容器 -->
+    <div id="viewerLayout" class="grid grid-cols-1 gap-6">
+      <article id="contentContainer" class="bg-white p-6 sm:p-8 rounded-xl border shadow-sm">
+        <p class="text-slate-400">載入中...</p>
+      </article>
+      <article id="translatedContainer" class="hidden bg-blue-50/30 p-6 sm:p-8 rounded-xl border border-blue-200 shadow-sm"></article>
+    </div>
   </main>
-  <!-- 支援單欄與雙欄對照的內容容器 -->
-<div id="viewerLayout" class="grid grid-cols-1 gap-6">
-  <article id="contentContainer" class="bg-white p-6 sm:p-8 rounded-xl border shadow-sm">
-    <p class="text-slate-400">載入中...</p>
-  </article>
-  <article id="translatedContainer" class="hidden bg-blue-50/30 p-6 sm:p-8 rounded-xl border border-blue-200 shadow-sm"></article>
-</div>
+
   <script type="module">
     import { mountNavbar } from './components/navbar.js';
     import { APP_CONFIG } from './config/app.config.js';
@@ -57,121 +54,133 @@
     import { getCurrentUser } from './modules/auth.module.js';
     import { fetchPostById, deletePost } from './modules/db.module.js';
     import { renderPostContent } from './modules/parser.module.js';
-    import { translateContent } from './modules/translator.module.js';
+    import { translatePost } from './modules/translator.module.js';
 
     mountNavbar();
-    document.getElementById('targetLang').innerHTML = APP_CONFIG.LANGUAGES.map(l => `<option value="${l.code}">${l.label}</option>`).join('');
+
+    const targetLangSelect = document.getElementById('targetLang');
+    targetLangSelect.innerHTML = APP_CONFIG.LANGUAGES
+      .map(l => `<option value="${l.code}">${l.label}</option>`)
+      .join('');
 
     const id = new URLSearchParams(window.location.search).get('id');
     const container = document.getElementById('contentContainer');
 
-    try {
-      const [post, currentUser] = await Promise.all([
-        fetchPostById(id),
-        getCurrentUser()
-      ]);
-      const cat = getCategoryById(post.category);
-      const isAuthor = currentUser && currentUser.id === post.user_id;
-      document.title = post.title;
-
-      document.getElementById('headerBox').innerHTML = `
-        <div class="flex items-center justify-between gap-2 mb-2">
-          <div class="flex items-center gap-2">
-            <span class="text-xs px-2.5 py-1 rounded-full border ${cat.badgeClass}">${cat.icon} ${cat.name}</span>
-            <span class="text-xs bg-slate-200 px-2 py-1 rounded">原文語系：${post.original_lang}</span>
-            <span class="text-xs text-slate-400 uppercase font-mono">${post.format}</span>
-          </div>
-          ${isAuthor ? `
-            <button id="deletePostBtn" class="text-xs bg-red-50 text-red-600 border border-red-200 px-3 py-1 rounded-lg hover:bg-red-100">
-              🗑️ 刪除文章
-            </button>
-          ` : ''}
-        </div>
-        <h1 class="text-3xl font-bold text-slate-900">${post.title}</h1>
-      `;
-
-      // 綁定刪除按鈕事件
-      document.getElementById('deletePostBtn')?.addEventListener('click', async () => {
-        if (!confirm(`確定要刪除「${post.title}」嗎？刪除後無法復原。`)) return;
-        try {
-          await deletePost(post.id, post.file_url);
-          alert('文章已刪除');
-          window.location.href = './index.html';
-        } catch (err) {
-          alert(`刪除失敗：${err.message}`);
-        }
-      });
-
-      // 預設永遠呈現上傳者原文
-      await renderPostContent(container, post);
-
-      // ...載入 post 後執行：
-if (post.format === 'markdown' || post.format === 'latex') {
-  document.getElementById('translateBar').classList.remove('hidden');
-
-  let currentTranslatedText = null;
-  let isBilingual = false;
-
-  const layout = document.getElementById('viewerLayout');
-  const transBox = document.getElementById('translatedContainer');
-  const status = document.getElementById('translateStatus');
-  const bilingualBtn = document.getElementById('bilingualBtn');
-  const resetBtn = document.getElementById('resetOrigBtn');
-
-  async function refreshView() {
-    if (!currentTranslatedText) {
-      layout.className = 'grid grid-cols-1 gap-6';
-      transBox.classList.add('hidden');
-      await renderPostContent(container, post);
-      return;
-    }
-
-    if (isBilingual) {
-      layout.className = 'grid grid-cols-1 lg:grid-cols-2 gap-6';
-      transBox.classList.remove('hidden');
-      await renderPostContent(container, post);
-      await renderPostContent(transBox, post, currentTranslatedText);
+    if (!id) {
+      container.innerHTML = `<p class="text-red-500">缺少文章 ID，請從 <a href="./index.html" class="underline text-blue-600">首頁</a> 點選文章進入。</p>`;
     } else {
-      layout.className = 'grid grid-cols-1 gap-6';
-      transBox.classList.add('hidden');
-      await renderPostContent(container, post, currentTranslatedText);
-    }
-  }
+      try {
+        const [post, currentUser] = await Promise.all([
+          fetchPostById(id),
+          getCurrentUser()
+        ]);
+        const cat = getCategoryById(post.category);
+        const isAuthor = currentUser && currentUser.id === post.user_id;
+        document.title = post.title;
 
-  document.getElementById('translateBtn').onclick = async () => {
-    status.textContent = '翻譯中（已自動保護數學公式）...';
-    try {
-      const mode = document.getElementById('translateMode').value;
-      const target = document.getElementById('targetLang').value;
-      const { text, fromCache } = await translatePost(post, target, mode);
+        document.getElementById('headerBox').innerHTML = `
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-xs px-2.5 py-1 rounded-full border ${cat.badgeClass}">${cat.icon} ${cat.name}</span>
+              <span class="text-xs bg-slate-200 px-2 py-1 rounded">原文語系：${post.original_lang}</span>
+              <span class="text-xs text-slate-400 uppercase font-mono">${post.format}</span>
+            </div>
+            ${isAuthor ? `
+              <button id="deletePostBtn" class="text-xs bg-red-50 text-red-600 border border-red-200 px-3 py-1 rounded-lg hover:bg-red-100">
+                🗑️ 刪除文章
+              </button>
+            ` : ''}
+          </div>
+          <h1 class="text-3xl font-bold text-slate-900">${post.title}</h1>
+        `;
 
-      currentTranslatedText = text;
-      bilingualBtn.classList.remove('hidden');
-      resetBtn.classList.remove('hidden');
-      status.textContent = fromCache ? '⚡ 已從快取載入譯文' : '✅ 翻譯完成';
-      await refreshView();
-    } catch (err) {
-      status.textContent = `❌ ${err.message}`;
-    }
-  };
+        // 綁定刪除按鈕
+        document.getElementById('deletePostBtn')?.addEventListener('click', async () => {
+          if (!confirm(`確定要刪除「${post.title}」嗎？刪除後無法復原。`)) return;
+          try {
+            await deletePost(post.id, post.file_url);
+            alert('文章已刪除');
+            window.location.href = './index.html';
+          } catch (err) {
+            alert(`刪除失敗：${err.message}`);
+          }
+        });
 
-  bilingualBtn.onclick = async () => {
-    isBilingual = !isBilingual;
-    bilingualBtn.textContent = isBilingual ? '切換單欄譯文' : '切換雙語對照';
-    await refreshView();
-  };
+        // 預設呈現原文
+        await renderPostContent(container, post);
 
-  resetBtn.onclick = async () => {
-    currentTranslatedText = null;
-    isBilingual = false;
-    bilingualBtn.classList.add('hidden');
-    resetBtn.classList.add('hidden');
-    status.textContent = '';
-    await refreshView();
-  };
-}
-    } catch (err) {
-      container.innerHTML = `<p class="text-red-500">無法載入內容：${err.message}</p>`;
+        // 若為 Markdown / LaTeX，顯示翻譯工具列
+        if (post.format === 'markdown' || post.format === 'latex') {
+          document.getElementById('translateBar').classList.remove('hidden');
+
+          // 預設目標語系自動選取與原文不同的語言（例如原文中文就預設選英文）
+          const defaultTarget = APP_CONFIG.LANGUAGES.find(l => l.code !== post.original_lang);
+          if (defaultTarget) targetLangSelect.value = defaultTarget.code;
+
+          let currentTranslatedText = null;
+          let isBilingual = false;
+
+          const layout = document.getElementById('viewerLayout');
+          const transBox = document.getElementById('translatedContainer');
+          const status = document.getElementById('translateStatus');
+          const bilingualBtn = document.getElementById('bilingualBtn');
+          const resetBtn = document.getElementById('resetOrigBtn');
+
+          async function refreshView() {
+            if (!currentTranslatedText) {
+              layout.className = 'grid grid-cols-1 gap-6';
+              transBox.classList.add('hidden');
+              await renderPostContent(container, post);
+              return;
+            }
+
+            if (isBilingual) {
+              layout.className = 'grid grid-cols-1 lg:grid-cols-2 gap-6';
+              transBox.classList.remove('hidden');
+              await renderPostContent(container, post);
+              await renderPostContent(transBox, post, currentTranslatedText);
+            } else {
+              layout.className = 'grid grid-cols-1 gap-6';
+              transBox.classList.add('hidden');
+              await renderPostContent(container, post, currentTranslatedText);
+            }
+          }
+
+          document.getElementById('translateBtn').onclick = async () => {
+            status.textContent = '翻譯中（已自動保護數學公式）...';
+            try {
+              const mode = document.getElementById('translateMode').value;
+              const target = targetLangSelect.value;
+              const { text, fromCache } = await translatePost(post, target, mode);
+
+              currentTranslatedText = text;
+              bilingualBtn.classList.remove('hidden');
+              resetBtn.classList.remove('hidden');
+              status.textContent = fromCache ? '⚡ 已從快取載入譯文' : '✅ 翻譯完成';
+              await refreshView();
+            } catch (err) {
+              status.textContent = `❌ ${err.message}`;
+            }
+          };
+
+          bilingualBtn.onclick = async () => {
+            isBilingual = !isBilingual;
+            bilingualBtn.textContent = isBilingual ? '切換單欄譯文' : '切換雙語對照';
+            await refreshView();
+          };
+
+          resetBtn.onclick = async () => {
+            currentTranslatedText = null;
+            isBilingual = false;
+            bilingualBtn.classList.add('hidden');
+            resetBtn.classList.add('hidden');
+            status.textContent = '';
+            await refreshView();
+          };
+        }
+      } catch (err) {
+        container.innerHTML = `<p class="text-red-500">無法載入內容：${err.message}</p>`;
+      }
     }
   </script>
 </body>
