@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>內容瀏覽</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- KaTeX 數學公式樣式 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+  <!-- Mammoth.js 用於前端解析 Word (.docx) -->
+  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+</head>
+<body class="bg-slate-50 min-h-screen">
+  <div id="navbar"></div>
+
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    <div id="headerBox" class="mb-6"></div>
+
+    <!-- 翻譯工具列（僅在純文字/MD/LaTeX 顯示） -->
+    <div id="translateBar" class="hidden bg-white p-4 rounded-xl border mb-6 flex flex-wrap items-center gap-3 text-sm">
+      <span class="font-medium">🌐 即時翻譯：</span>
+      <select id="translateMode" class="border rounded px-2 py-1">
+        <option value="local">地端 API (Local)</option>
+        <option value="cloud">雲端 API (Edge Function)</option>
+      </select>
+      <select id="targetLang" class="border rounded px-2 py-1"></select>
+      <button id="translateBtn" class="bg-slate-800 text-white px-3 py-1 rounded hover:bg-slate-700">翻譯</button>
+      <button id="resetOrigBtn" class="text-blue-600 hover:underline hidden">還原原文</button>
+      <span id="translateStatus" class="text-slate-500"></span>
+    </div>
+
+    <article id="contentContainer" class="bg-white p-6 sm:p-8 rounded-xl border shadow-sm">
+      <p class="text-slate-400">載入中...</p>
+    </article>
+  </main>
+
+  <script type="module">
+    import { mountNavbar } from './components/navbar.js';
+    import { APP_CONFIG } from './config/app.config.js';
+    import { getCategoryById } from './config/categories.config.js';
+    import { fetchPostById } from './modules/db.module.js';
+    import { renderPostContent } from './modules/parser.module.js';
+    import { translateContent } from './modules/translator.module.js';
+
+    mountNavbar();
+    document.getElementById('targetLang').innerHTML = APP_CONFIG.LANGUAGES.map(l => `<option value="${l.code}">${l.label}</option>`).join('');
+
+    const id = new URLSearchParams(window.location.search).get('id');
+    const container = document.getElementById('contentContainer');
+
+    try {
+      const post = await fetchPostById(id);
+      const cat = getCategoryById(post.category);
+      document.title = post.title;
+
+      document.getElementById('headerBox').innerHTML = `
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-xs px-2.5 py-1 rounded-full border ${cat.badgeClass}">${cat.icon} ${cat.name}</span>
+          <span class="text-xs bg-slate-200 px-2 py-1 rounded">原文語系：${post.original_lang}</span>
+          <span class="text-xs text-slate-400 uppercase font-mono">${post.format}</span>
+        </div>
+        <h1 class="text-3xl font-bold text-slate-900">${post.title}</h1>
+      `;
+
+      // 預設永遠呈現上傳者原文
+      await renderPostContent(container, post);
+
+      if (post.format === 'markdown' || post.format === 'latex') {
+        document.getElementById('translateBar').classList.remove('hidden');
+
+        document.getElementById('translateBtn').onclick = async () => {
+          const status = document.getElementById('translateStatus');
+          status.textContent = '翻譯中...';
+          try {
+            const mode = document.getElementById('translateMode').value;
+            const target = document.getElementById('targetLang').value;
+            const translated = await translateContent(post.raw_text, target, mode);
+            await renderPostContent(container, post, translated);
+            document.getElementById('resetOrigBtn').classList.remove('hidden');
+            status.textContent = '翻譯完成';
+          } catch (err) {
+            status.textContent = err.message;
+          }
+        };
+
+        document.getElementById('resetOrigBtn').onclick = async () => {
+          await renderPostContent(container, post);
+          document.getElementById('resetOrigBtn').classList.add('hidden');
+          document.getElementById('translateStatus').textContent = '';
+        };
+      }
+    } catch (err) {
+      container.innerHTML = `<p class="text-red-500">無法載入內容：${err.message}</p>`;
+    }
+  </script>
+</body>
+</html>
