@@ -38,7 +38,8 @@
     import { mountNavbar } from './components/navbar.js';
     import { APP_CONFIG } from './config/app.config.js';
     import { getCategoryById } from './config/categories.config.js';
-    import { fetchPostById } from './modules/db.module.js';
+    import { getCurrentUser } from './modules/auth.module.js';
+    import { fetchPostById, deletePost } from './modules/db.module.js';
     import { renderPostContent } from './modules/parser.module.js';
     import { translateContent } from './modules/translator.module.js';
 
@@ -49,18 +50,41 @@
     const container = document.getElementById('contentContainer');
 
     try {
-      const post = await fetchPostById(id);
+      const [post, currentUser] = await Promise.all([
+        fetchPostById(id),
+        getCurrentUser()
+      ]);
       const cat = getCategoryById(post.category);
+      const isAuthor = currentUser && currentUser.id === post.user_id;
       document.title = post.title;
 
       document.getElementById('headerBox').innerHTML = `
-        <div class="flex items-center gap-2 mb-2">
-          <span class="text-xs px-2.5 py-1 rounded-full border ${cat.badgeClass}">${cat.icon} ${cat.name}</span>
-          <span class="text-xs bg-slate-200 px-2 py-1 rounded">原文語系：${post.original_lang}</span>
-          <span class="text-xs text-slate-400 uppercase font-mono">${post.format}</span>
+        <div class="flex items-center justify-between gap-2 mb-2">
+          <div class="flex items-center gap-2">
+            <span class="text-xs px-2.5 py-1 rounded-full border ${cat.badgeClass}">${cat.icon} ${cat.name}</span>
+            <span class="text-xs bg-slate-200 px-2 py-1 rounded">原文語系：${post.original_lang}</span>
+            <span class="text-xs text-slate-400 uppercase font-mono">${post.format}</span>
+          </div>
+          ${isAuthor ? `
+            <button id="deletePostBtn" class="text-xs bg-red-50 text-red-600 border border-red-200 px-3 py-1 rounded-lg hover:bg-red-100">
+              🗑️ 刪除文章
+            </button>
+          ` : ''}
         </div>
         <h1 class="text-3xl font-bold text-slate-900">${post.title}</h1>
       `;
+
+      // 綁定刪除按鈕事件
+      document.getElementById('deletePostBtn')?.addEventListener('click', async () => {
+        if (!confirm(`確定要刪除「${post.title}」嗎？刪除後無法復原。`)) return;
+        try {
+          await deletePost(post.id, post.file_url);
+          alert('文章已刪除');
+          window.location.href = './index.html';
+        } catch (err) {
+          alert(`刪除失敗：${err.message}`);
+        }
+      });
 
       // 預設永遠呈現上傳者原文
       await renderPostContent(container, post);
