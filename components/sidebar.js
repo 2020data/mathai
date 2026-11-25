@@ -4,6 +4,11 @@ import { CATEGORIES, getCategoryLabel } from '../config/categories.config.js';
 import { getUiLang, t } from '../modules/i18n.module.js';
 import { icon } from '../modules/icons.module.js';
 
+const DEFAULT_COUNTRIES = [
+  { code: 'TW', name: '台灣・東海大學', shortName: '台灣 (東海)' },
+  { code: 'MY', name: '馬來西亞・拉曼大學 (UTAR)', shortName: '馬來西亞 (UTAR)' }
+];
+
 function escapeHtml(str) {
   return String(str || '')
     .replace(/&/g, '&amp;')
@@ -14,6 +19,8 @@ function escapeHtml(str) {
 
 export function renderSidebar(containerEl, posts, state, { onSelect, onAutoClassifyAll, currentUser, competitions = [] }) {
   const lang = getUiLang();
+  const countries = APP_CONFIG.COMPETITION_COUNTRIES || DEFAULT_COUNTRIES;
+
   const tree = {};
   for (const cat of CATEGORIES) {
     tree[cat.id] = { total: 0, subs: {} };
@@ -26,9 +33,8 @@ export function renderSidebar(containerEl, posts, state, { onSelect, onAutoClass
     tree[catId].subs[subName] = (tree[catId].subs[subName] || 0) + 1;
   }
 
-  // 整理各國（TW 東海 / MY UTAR）的歷年競賽年份清單
   const compByCountry = {};
-  for (const c of APP_CONFIG.COMPETITION_COUNTRIES) {
+  for (const c of countries) {
     compByCountry[c.code] = [];
   }
   for (const rec of competitions) {
@@ -43,13 +49,10 @@ export function renderSidebar(containerEl, posts, state, { onSelect, onAutoClass
 
   const isAllActive = state.category === 'all' && state.subcategory === 'all';
   const myPostsCount = currentUser ? posts.filter(p => p.user_id === currentUser.id).length : 0;
-
-  // 篩出非 competition 的一般文章分類（數學、人工智慧）
   const articleCategories = CATEGORIES.filter(c => c.id !== 'competition');
 
   containerEl.innerHTML = `
     <div class="bg-white/90 backdrop-blur-sm rounded-lg border border-[#E4E0D6] p-5 sticky top-32 space-y-5">
-      <!-- 1. 第一順位：UTAR × 東海數學競賽（分點東海與 UTAR 年度，點選直達 competition.html） -->
       <div class="pb-4 border-b border-[#E4E0D6]">
         <a href="./competition.html"
           class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-semibold bg-[#2E4F3E] text-white hover:opacity-95 transition shadow-sm">
@@ -61,7 +64,7 @@ export function renderSidebar(containerEl, posts, state, { onSelect, onAutoClass
         </a>
 
         <div class="mt-3 space-y-3 pl-1">
-          ${APP_CONFIG.COMPETITION_COUNTRIES.map(country => {
+          ${countries.map(country => {
             const years = compByCountry[country.code] || [];
             return `
               <div>
@@ -87,7 +90,6 @@ export function renderSidebar(containerEl, posts, state, { onSelect, onAutoClass
         </div>
       </div>
 
-      <!-- 2. 典藏文章分類索引 -->
       <div>
         <div class="flex items-center justify-between pb-2.5 mb-3 border-b border-[#E4E0D6]">
           <span class="font-mono-meta text-[11px] uppercase tracking-[0.14em] text-stone-500">${t('sidebarTitle')}</span>
@@ -103,7 +105,7 @@ export function renderSidebar(containerEl, posts, state, { onSelect, onAutoClass
 
         <div class="space-y-4">
           ${articleCategories.map(cat => {
-            const group = tree[cat.id];
+            const group = tree[cat.id] || { total: 0, subs: {} };
             const isMainActive = state.category === cat.id && state.subcategory === 'all';
             const subEntries = Object.entries(group.subs).sort((a, b) => b[1] - a[1]);
 
