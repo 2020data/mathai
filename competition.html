@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UTAR × 東海大學數學競賽歷年檔案</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+  <link rel="stylesheet" href="./styles/editorial.css" />
+</head>
+<body class="min-h-screen flex flex-col">
+  <div id="navbar"></div>
+
+  <!-- 頂部：歷屆年份與各國獨立頁面導覽 -->
+  <section class="border-b border-[#E4E0D6] bg-white/70">
+    <div class="max-w-6xl mx-auto px-5 py-7 space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <p class="font-mono-meta text-[11px] uppercase tracking-[0.18em] text-[#2E4F3E] mb-1">
+            UTAR (MALAYSIA) × TUNGHAI UNIVERSITY (TAIWAN)
+          </p>
+          <h1 class="font-serif-editorial text-2xl sm:text-4xl font-semibold text-stone-900">
+            拉曼大學 × 東海大學數學競賽歷年紀錄
+          </h1>
+        </div>
+        <div id="adminActionBar" class="hidden flex flex-wrap items-center gap-2"></div>
+      </div>
+
+      <!-- 年份切換列 + 國家獨立頁面切換 -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#E4E0D6]">
+        <div class="flex flex-wrap items-center gap-2" id="yearTabs"></div>
+        <div class="flex flex-wrap items-center gap-2" id="countryTabs"></div>
+      </div>
+    </div>
+  </section>
+
+  <main class="max-w-6xl w-full mx-auto px-5 py-8 flex-1">
+    <!-- 瀏覽檢視區 -->
+    <div id="pageViewArea" class="space-y-6">
+      <p class="text-stone-400 font-mono-meta text-xs text-center py-16">載入競賽年度資料中...</p>
+    </div>
+
+    <!-- 編輯 / 新增年度頁面表單（登入後可開啟） -->
+    <form id="editorForm" class="hidden bg-white rounded-lg border border-[#D8D3C6] p-6 sm:p-8 space-y-6">
+      <div class="flex items-center justify-between pb-4 border-b border-[#E4E0D6]">
+        <h2 id="editorHeading" class="font-serif-editorial text-2xl font-semibold text-stone-900">編輯年度競賽頁面</h2>
+        <button type="button" id="closeEditorBtn" class="text-xs text-stone-500 hover:text-stone-900">取消返回</button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs uppercase tracking-wider text-stone-500 mb-1">年份 (Year)</label>
+          <input id="fYear" type="number" min="2000" max="2100" required class="w-full border border-[#DDD8CC] rounded px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs uppercase tracking-wider text-stone-500 mb-1">獨立國家頁面</label>
+          <select id="fCountry" class="w-full border border-[#DDD8CC] rounded px-3 py-2 text-sm bg-white"></select>
+        </div>
+        <div>
+          <label class="block text-xs uppercase tracking-wider text-stone-500 mb-1">舉辦日期</label>
+          <input id="fDate" type="text" placeholder="例如：2025/07/12 - 07/14" class="w-full border border-[#DDD8CC] rounded px-3 py-2 text-sm" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs uppercase tracking-wider text-stone-500 mb-1">年度主標題</label>
+          <input id="fTitle" type="text" required placeholder="例如：2025 東海大學 × UTAR 數學交流競賽（台灣場）" class="w-full border border-[#DDD8CC] rounded px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs uppercase tracking-wider text-stone-500 mb-1">舉辦地點</label>
+          <input id="fLocation" type="text" placeholder="例如：台中市東海大學理學院" class="w-full border border-[#DDD8CC] rounded px-3 py-2 text-sm" />
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs uppercase tracking-wider text-stone-500 mb-1">副標題 / 競賽標語</label>
+        <input id="fSubtitle" type="text" class="w-full border border-[#DDD8CC] rounded px-3 py-2 text-sm" />
+      </div>
+
+      <div>
+        <label class="block text-xs uppercase tracking-wider text-stone-500 mb-1">主視覺宣傳海報連結（外部免費圖床網址）</label>
+        <input id="fCover" type="url" placeholder="https://..." class="w-full border border-[#DDD8CC] rounded px-3 py-2 text-sm" />
+      </div>
+
+      <!-- 宣傳與外部照片清單 -->
+      <div class="p-4 rounded bg-[#F6F4EF] border border-[#E4E0D6] space-y-3">
+        <div class="flex items-center justify-between">
+          <label class="text-xs font-semibold uppercase tracking-wider text-stone-700">宣傳照片與外部相簿連結</label>
+          <button type="button" id="addGalleryRowBtn" class="text-xs border border-stone-900 px-2.5 py-1 rounded-full hover:bg-stone-900 hover:text-white transition">+ 新增一張照片</button>
+        </div>
+        <div id="galleryRows" class="space-y-2"></div>
+      </div>
+
+      <div>
+        <label class="block text-xs uppercase tracking-wider text-stone-500 mb-1">子頁 1：競賽資訊與內容（支援 Markdown / LaTeX）</label>
+        <textarea id="fOverview" rows="6" class="w-full border border-[#DDD8CC] rounded p-3 font-mono-meta text-xs"
+          placeholder="## 競賽宗旨&#10;填寫活動簡介、賽制說明與重要時程..."></textarea>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs uppercase tracking-wider text-stone-500 mb-1">子頁 2：委員會名單（Markdown）</label>
+          <textarea id="fCommittee" rows="6" class="w-full border border-[#DDD8CC] rounded p-3 font-mono-meta text-xs"
+            placeholder="### 指導委員會&#10;- 主任委員：...&#10;- 命題委員：..."></textarea>
+        </div>
+        <div>
+          <label class="block text-xs uppercase tracking-wider text-stone-500 mb-1">子頁 3：工作人員與志工（Markdown）</label>
+          <textarea id="fStaff" rows="6" class="w-full border border-[#DDD8CC] rounded p-3 font-mono-meta text-xs"
+            placeholder="### 執行團隊&#10;- 總召：...&#10;- 攝影與美宣：..."></textarea>
+        </div>
+      </div>
+
+      <!-- 動態切分額外子頁面（避免單頁資訊過多） -->
+      <div class="p-4 rounded bg-[#F6F4EF] border border-[#E4E0D6] space-y-3">
+        <div class="flex items-center justify-between">
+          <label class="text-xs font-semibold uppercase tracking-wider text-stone-700">額外切分子頁面（資訊過多時新增，例如：賽程表、得獎名單、歷屆題目）</label>
+          <button type="button" id="addSubpageRowBtn" class="text-xs border border-stone-900 px-2.5 py-1 rounded-full hover:bg-stone-900 hover:text-white transition">+ 新增子頁面</button>
+        </div>
+        <div id="subpageRows" class="space-y-3"></div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button type="submit" id="saveCompBtn" class="bg-stone-900 text-[#F6F4EF] px-6 py-2.5 rounded text-sm font-medium hover:bg-stone-700 transition">
+          儲存此年度國家頁面
+        </button>
+        <span id="editorStatus" class="text-xs text-stone-500"></span>
+      </div>
+    </form>
+  </main>
+
+  <script type="module">
+    import { mountNavbar } from './components/navbar.js';
+    import { APP_CONFIG } from './config/app.config.js';
+    import { getCurrentUser } from './modules/auth.module.js';
+    import { fetchAllCompetitions, upsertCompetitionPage, cloneCompetitionToNextYear } from './modules/competition.module.js';
+    import { parseMarkdownWithMath } from './modules/parser.module.js';
+    import { mountShareBar } from './modules/share.module.js';
+    import { icon } from './modules/icons.module.js';
+
+    function esc(s) {
+      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    mountNavbar();
+
+    const countries = APP_CONFIG.COMPETITION_COUNTRIES;
+    document.getElementById('fCountry').innerHTML = countries.map(c => `<option value="${c.code}">${c.name}</option>`).join('');
+
+    const params = new URLSearchParams(window.location.search);
+    let allRecords = [];
+    let currentUser = null;
+    let activeYear = Number(params.get('year')) || null;
+    let activeCountry = params.get('country') || countries[0].code;
+    let activeTab = params.get('tab') || 'overview';
+
+    function updateUrl(year, country, tab = 'overview') {
+      const next = new URL(window.location.href);
+      next.searchParams.set('year', year);
+      next.searchParams.set('country', country);
+      next.searchParams.set('tab', tab);
+      window.history.replaceState({}, '', next.toString());
+    }
+
+    function getAvailableYears() {
+      const set = new Set(allRecords.map(r => r.year));
+      if (!set.size) set.add(new Date().getFullYear());
+      if (activeYear) set.add(activeYear);
+      return Array.from(set).sort((a, b) => b - a);
+    }
+
+    function renderSelectors() {
+      const years = getAvailableYears();
+      if (!activeYear) activeYear = years[0];
+
+      document.getElementById('yearTabs').innerHTML = `
+        <span class="font-mono-meta text-[11px] text-stone-400 mr-1">${icon('calendar', 'w-3.5 h-3.5 inline')} 年度</span>
+        ${years.map(y => `
+          <button data-year="${y}" class="px-3 py-1 rounded-full text-xs font-mono-meta transition
+            ${y === activeYear ? 'bg-stone-900 text-[#F6F4EF]' : 'border border-[#DDD8CC] bg-white text-stone-600 hover:bg-[#EFECE5]'}">
+            ${y}
+          </button>
+        `).join('')}
+      `;
+
+      document.getElementById('countryTabs').innerHTML = countries.map(c => `
+        <button data-country="${c.code}" class="px-3.5 py-1.5 rounded-full text-xs font-medium transition
+          ${c.code === activeCountry ? 'bg-[#2E4F3E] text-white' : 'border border-[#DDD8CC] bg-white text-stone-700 hover:bg-[#EFECE5]'}">
+          ${c.shortName}
+        </button>
+      `).join('');
+
+      document.querySelectorAll('#yearTabs button').forEach(btn => {
+        btn.onclick = () => {
+          activeYear = Number(btn.dataset.year);
+          activeTab = 'overview';
+          updateUrl(activeYear, activeCountry, activeTab);
+          renderAll();
+        };
+      });
+
+      document.querySelectorAll('#countryTabs button').forEach(btn => {
+        btn.onclick = () => {
+          activeCountry = btn.dataset.country;
+          activeTab = 'overview';
+          updateUrl(activeYear, activeCountry, activeTab);
+          renderAll();
+        };
+      });
+    }
+
+    function renderAdminBar(currentRecord) {
+      const bar = document.getElementById('adminActionBar');
+      if (!currentUser) { bar.classList.add('hidden'); return; }
+      bar.classList.remove('hidden');
+
+      bar.innerHTML = `
+        <button id="openNewBtn" class="inline-flex items-center gap-1 text-xs border border-stone-900 text-stone-900 px-3 py-1.5 rounded-full hover:bg-stone-900 hover:text-white transition">
+          ${icon('plus', 'w-3.5 h-3.5')} 新增年度頁
+        </button>
+        ${currentRecord ? `
+          <button id="openEditBtn" class="inline-flex items-center gap-1 text-xs bg-stone-900 text-white px-3 py-1.5 rounded-full hover:bg-stone-700 transition">
+            ${icon('edit', 'w-3.5 h-3.5')} 編輯本頁
+          </button>
+          <button id="cloneNextBtn" class="inline-flex items-center gap-1 text-xs bg-[#2E4F3E] text-white px-3.5 py-1.5 rounded-full hover:opacity-90 transition">
+            ${icon('copy', 'w-3.5 h-3.5')} 一鍵延續至 ${currentRecord.year + 1} 年
+          </button>
+        ` : ''}
+      `;
+
+      document.getElementById('openNewBtn').onclick = () => openEditor(null);
+      document.getElementById('openEditBtn')?.addEventListener('click', () => openEditor(currentRecord));
+      document.getElementById('cloneNextBtn')?.addEventListener('click', async () => {
+        if (!confirm(`確定要將 ${currentRecord.year} 年（${currentRecord.country}）的架構、委員會與子頁面延續複製到 ${currentRecord.year + 1} 年嗎？`)) return;
+        try {
+          const created = await cloneCompetitionToNextYear(currentRecord);
+          allRecords.unshift(created);
+          activeYear = created.year;
+          activeCountry = created.country;
+          activeTab = 'overview';
+          updateUrl(activeYear, activeCountry, activeTab);
+          renderAll();
+          alert(`已成功延續建立 ${created.year} 年頁面！現在您可以點選「編輯本頁」更新新年度日期與照片。`);
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+    }
+
+    function renderPageContent(record) {
+      const area = document.getElementById('pageViewArea');
+      const countryObj = countries.find(c => c.code === activeCountry) || countries[0];
+
+      if (!record) {
+        area.innerHTML = `
+          <div class="bg-white rounded-lg border border-[#E4E0D6] p-12 text-center space-y-4">
+            <p class="font-serif-editorial text-2xl text-stone-800">${activeYear} 年 · ${countryObj.name}</p>
+            <p class="text-sm text-stone-500">此年度的國家獨立頁面尚未建立紀錄。</p>
+            ${currentUser ? `
+              <button id="quickCreateBtn" class="bg-stone-900 text-white px-5 py-2 rounded-full text-xs hover:bg-stone-700 transition">
+                建立 ${activeYear} 年 ${countryObj.shortName} 獨立頁面
+              </button>
+            ` : `<a href="./login.html" class="inline-block text-xs underline text-stone-600">登入後可建立年度紀錄</a>`}
+          </div>
+        `;
+        document.getElementById('quickCreateBtn')?.addEventListener('click', () => openEditor(null));
+        return;
+      }
+
+      document.title = `${record.title} | ${countryObj.shortName}`;
+
+      // 整理所有子頁面清單（固定 3 大類 + 自訂子頁面）
+      const extraSubs = Array.isArray(record.extra_subpages) ? record.extra_subpages : [];
+      const tabs = [
+        { id: 'overview', label: '競賽資訊與內容' },
+        { id: 'gallery', label: `宣傳與照片牆 (${(record.gallery_items || []).length})` },
+        { id: 'people', label: '委員會與工作人員' },
+        ...extraSubs.map((s, idx) => ({ id: s.id || `sub_${idx}`, label: s.title || `子頁面 ${idx + 1}`, custom: s }))
+      ];
+
+      if (!tabs.some(t => t.id === activeTab)) activeTab = 'overview';
+
+      let bodyHtml = '';
+      if (activeTab === 'overview') {
+        bodyHtml = `<div class="editorial-prose">${parseMarkdownWithMath(record.overview_md || '_尚未填寫競賽簡介_')}</div>`;
+      } else if (activeTab === 'gallery') {
+        const items = Array.isArray(record.gallery_items) ? record.gallery_items : [];
+        bodyHtml = items.length ? `
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            ${items.map(item => {
+              const targetHref = item.external_link || item.url;
+              return `
+                <a href="${esc(targetHref)}" target="_blank" rel="noopener noreferrer"
+                  class="editorial-card group rounded-lg overflow-hidden block">
+                  <div class="aspect-[16/10] bg-stone-100 overflow-hidden border-b border-[#E4E0D6]">
+                    <img src="${esc(item.url)}" alt="${esc(item.caption)}" loading="lazy"
+                      class="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+                  </div>
+                  <div class="p-3.5 flex items-center justify-between gap-2 text-xs text-stone-700">
+                    <span class="truncate">${esc(item.caption || '點選檢視外部原圖 / 相簿')}</span>
+                    ${icon('external', 'w-3.5 h-3.5 text-stone-400')}
+                  </div>
+                </a>
+              `;
+            }).join('')}
+          </div>
+        ` : `<p class="text-sm text-stone-400 text-center py-10">尚未加入宣傳照片連結。</p>`;
+      } else if (activeTab === 'people') {
+        bodyHtml = `
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="editorial-prose">
+              <h2 class="!mt-0">委員會名單 (Committee)</h2>
+              ${parseMarkdownWithMath(record.committee_md || '_尚未填寫委員會名單_')}
+            </div>
+            <div class="editorial-prose lg:border-l lg:border-[#E4E0D6] lg:pl-8">
+              <h2 class="!mt-0">工作人員與執行團隊 (Staff)</h2>
+              ${parseMarkdownWithMath(record.staff_md || '_尚未填寫工作人員名單_')}
+            </div>
+          </div>
+        `;
+      } else {
+        const customTab = tabs.find(t => t.id === activeTab)?.custom;
+        bodyHtml = `<div class="editorial-prose">${parseMarkdownWithMath(customTab?.content_md || '')}</div>`;
+      }
+
+      area.innerHTML = `
+        <!-- 頁面標頭與主視覺 -->
+        <div class="bg-white rounded-lg border border-[#E4E0D6] overflow-hidden">
+          ${record.cover_image_url ? `
+            <div class="w-full max-h-[380px] overflow-hidden border-b border-[#E4E0D6] bg-stone-100">
+              <img src="${esc(record.cover_image_url)}" alt="${esc(record.title)}" class="w-full h-full object-cover" />
+            </div>
+          ` : ''}
+          <div class="p-6 sm:p-8 space-y-4">
+            <div class="flex flex-wrap items-center gap-2 text-xs">
+              <span class="font-mono-meta px-2.5 py-0.5 rounded-full bg-stone-900 text-white">${record.year}</span>
+              <span class="px-2.5 py-0.5 rounded-full border border-[#2E4F3E]/30 bg-[#2E4F3E]/10 text-[#2E4F3E] font-medium">${countryObj.name}</span>
+              ${record.event_date ? `<span class="font-mono-meta text-stone-500">· ${esc(record.event_date)}</span>` : ''}
+              ${record.location ? `<span class="text-stone-500">· ${esc(record.location)}</span>` : ''}
+            </div>
+            <h2 class="font-serif-editorial text-3xl sm:text-4xl font-semibold text-stone-900">${esc(record.title)}</h2>
+            ${record.subtitle ? `<p class="text-stone-600 text-sm sm:text-base">${esc(record.subtitle)}</p>` : ''}
+
+            <!-- 社群分享列：FB / IG / WhatsApp / LINE -->
+            <div id="compShareBar" class="pt-4 border-t border-[#F0EDE6]"></div>
+          </div>
+        </div>
+
+        <!-- 子頁面切換列 -->
+        <div class="flex flex-wrap gap-2 border-b border-[#E4E0D6] pb-3" id="subpageTabs">
+          ${tabs.map(t => `
+            <button data-tab="${esc(t.id)}" class="px-4 py-2 rounded-full text-xs font-medium transition
+              ${t.id === activeTab ? 'bg-stone-900 text-[#F6F4EF]' : 'bg-white border border-[#DDD8CC] text-stone-600 hover:bg-[#EFECE5]'}">
+              ${esc(t.label)}
+            </button>
+          `).join('')}
+        </div>
+
+        <!-- 子頁面呈現內容 -->
+        <article class="bg-white rounded-lg border border-[#E4E0D6] p-6 sm:p-10">
+          ${bodyHtml}
+        </article>
+      `;
+
+      mountShareBar(document.getElementById('compShareBar'), {
+        title: `${record.title} (${countryObj.shortName})`,
+        url: window.location.href
+      });
+
+      document.querySelectorAll('#subpageTabs button').forEach(btn => {
+        btn.onclick = () => {
+          activeTab = btn.dataset.tab;
+          updateUrl(activeYear, activeCountry, activeTab);
+          renderPageContent(record);
+        };
+      });
+    }
+
+    // === 編輯器動態欄位（照片列與自訂子頁面） ===
+    function appendGalleryRow(item = { url: '', caption: '', external_link: '' }) {
+      const row = document.createElement('div');
+      row.className = 'grid grid-cols-1 sm:grid-cols-12 gap-2 items-center bg-white p-2.5 rounded border border-[#E4E0D6]';
+      row.innerHTML = `
+        <input type="url" data-k="url" value="${esc(item.url)}" placeholder="照片顯示網址 (https://...)" class="sm:col-span-4 border border-[#DDD8CC] rounded px-2.5 py-1.5 text-xs" />
+        <input type="text" data-k="caption" value="${esc(item.caption)}" placeholder="照片說明" class="sm:col-span-3 border border-[#DDD8CC] rounded px-2.5 py-1.5 text-xs" />
+        <input type="url" data-k="external_link" value="${esc(item.external_link)}" placeholder="點選跳轉的外部相簿網址（選填）" class="sm:col-span-4 border border-[#DDD8CC] rounded px-2.5 py-1.5 text-xs" />
+        <button type="button" class="sm:col-span-1 text-xs text-red-600 hover:underline">移除</button>
+      `;
+      row.querySelector('button').onclick = () => row.remove();
+      document.getElementById('galleryRows').appendChild(row);
+    }
+
+    function appendSubpageRow(sub = { id: '', title: '', content_md: '' }) {
+      const row = document.createElement('div');
+      row.className = 'bg-white p-3 rounded border border-[#E4E0D6] space-y-2';
+      row.innerHTML = `
+        <div class="flex items-center gap-2">
+          <input type="text" data-k="title" value="${esc(sub.title)}" placeholder="子頁面標題（例如：2025 賽程表 / 得獎名單）" class="flex-1 border border-[#DDD8CC] rounded px-2.5 py-1.5 text-xs" />
+          <input type="text" data-k="id" value="${esc(sub.id)}" placeholder="網址代號（英文，如 schedule）" class="w-40 border border-[#DDD8CC] rounded px-2.5 py-1.5 text-xs font-mono-meta" />
+          <button type="button" class="text-xs text-red-600 hover:underline">移除</button>
+        </div>
+        <textarea data-k="content_md" rows="4" placeholder="子頁面 Markdown / LaTeX 內容..." class="w-full border border-[#DDD8CC] rounded p-2.5 font-mono-meta text-xs">${esc(sub.content_md)}</textarea>
+      `;
+      row.querySelector('button').onclick = () => row.remove();
+      document.getElementById('subpageRows').appendChild(row);
+    }
+
+    document.getElementById('addGalleryRowBtn').onclick = () => appendGalleryRow();
+    document.getElementById('addSubpageRowBtn').onclick = () => appendSubpageRow();
+
+    function openEditor(record) {
+      document.getElementById('pageViewArea').classList.add('hidden');
+      document.getElementById('editorForm').classList.remove('hidden');
+      document.getElementById('editorStatus').textContent = '';
+
+      document.getElementById('fYear').value = record?.year || activeYear || new Date().getFullYear();
+      document.getElementById('fCountry').value = record?.country || activeCountry;
+      document.getElementById('fTitle').value = record?.title || '';
+      document.getElementById('fSubtitle').value = record?.subtitle || '';
+      document.getElementById('fDate').value = record?.event_date || '';
+      document.getElementById('fLocation').value = record?.location || '';
+      document.getElementById('fCover').value = record?.cover_image_url || '';
+      document.getElementById('fOverview').value = record?.overview_md || '';
+      document.getElementById('fCommittee').value = record?.committee_md || '';
+      document.getElementById('fStaff').value = record?.staff_md || '';
+
+      document.getElementById('galleryRows').innerHTML = '';
+      (record?.gallery_items || []).forEach(appendGalleryRow);
+
+      document.getElementById('subpageRows').innerHTML = '';
+      (record?.extra_subpages || []).forEach(appendSubpageRow);
+    }
+
+    document.getElementById('closeEditorBtn').onclick = () => {
+      document.getElementById('editorForm').classList.add('hidden');
+      document.getElementById('pageViewArea').classList.remove('hidden');
+    };
+
+    document.getElementById('editorForm').onsubmit = async (e) => {
+      e.preventDefault();
+      const status = document.getElementById('editorStatus');
+      status.textContent = '儲存中...';
+
+      const gallery_items = Array.from(document.querySelectorAll('#galleryRows > div')).map(row => ({
+        url: row.querySelector('[data-k="url"]').value.trim(),
+        caption: row.querySelector('[data-k="caption"]').value.trim(),
+        external_link: row.querySelector('[data-k="external_link"]').value.trim()
+      })).filter(i => i.url);
+
+      const extra_subpages = Array.from(document.querySelectorAll('#subpageRows > div')).map((row, idx) => ({
+        id: row.querySelector('[data-k="id"]').value.trim() || `sub_${idx + 1}`,
+        title: row.querySelector('[data-k="title"]').value.trim(),
+        content_md: row.querySelector('[data-k="content_md"]').value
+      })).filter(s => s.title);
+
+      try {
+        const saved = await upsertCompetitionPage({
+          year: Number(document.getElementById('fYear').value),
+          country: document.getElementById('fCountry').value,
+          title: document.getElementById('fTitle').value,
+          subtitle: document.getElementById('fSubtitle').value,
+          event_date: document.getElementById('fDate').value,
+          location: document.getElementById('fLocation').value,
+          cover_image_url: document.getElementById('fCover').value,
+          gallery_items,
+          overview_md: document.getElementById('fOverview').value,
+          committee_md: document.getElementById('fCommittee').value,
+          staff_md: document.getElementById('fStaff').value,
+          extra_subpages
+        });
+
+        const idx = allRecords.findIndex(r => r.year === saved.year && r.country === saved.country);
+        if (idx !== -1) allRecords[idx] = saved; else allRecords.unshift(saved);
+
+        activeYear = saved.year;
+        activeCountry = saved.country;
+        updateUrl(activeYear, activeCountry, activeTab);
+
+        document.getElementById('editorForm').classList.add('hidden');
+        document.getElementById('pageViewArea').classList.remove('hidden');
+        renderAll();
+      } catch (err) {
+        status.textContent = `儲存失敗：${err.message}`;
+      }
+    };
+
+    function renderAll() {
+      renderSelectors();
+      const currentRecord = allRecords.find(r => r.year === activeYear && r.country === activeCountry) || null;
+      renderAdminBar(currentRecord);
+      renderPageContent(currentRecord);
+    }
+
+    try {
+      [allRecords, currentUser] = await Promise.all([fetchAllCompetitions(), getCurrentUser()]);
+      renderAll();
+    } catch (err) {
+      document.getElementById('pageViewArea').innerHTML =
+        `<p class="text-red-700 text-sm text-center py-12">載入失敗：${err.message}（請確認已在 Supabase 建立 competitions 資料表）</p>`;
+    }
+  </script>
+</body>
+</html>
