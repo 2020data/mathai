@@ -19,20 +19,20 @@
         </button>
       </div>
 
-      <!-- 標題 -->
       <div>
         <label id="lblTitle" class="block text-xs font-medium uppercase tracking-wider text-stone-500 mb-1.5"></label>
         <input id="title" type="text" required
           class="w-full border border-[#DDD8CC] rounded px-3.5 py-2.5 text-sm focus:outline-none focus:border-stone-900"
           placeholder="例如：高斯積分的極座標推導" />
       </div>
+
       <div>
         <label class="block text-xs font-medium uppercase tracking-wider text-stone-500 mb-1.5">創作者 / 編輯者（選填，可留空）</label>
         <input id="creatorName" type="text"
           class="w-full border border-[#DDD8CC] rounded px-3.5 py-2 text-sm focus:outline-none focus:border-stone-900"
           placeholder="例如：王小明 / 東海應數編輯組（不填則不顯示）" />
       </div>
-      <!-- 主分類 / 子分類 / 語系 -->
+
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label id="lblCat" class="block text-xs font-medium uppercase tracking-wider text-stone-500 mb-1.5"></label>
@@ -51,7 +51,6 @@
       </div>
       <p id="classifyHint" class="text-xs text-stone-500 -mt-3 hidden"></p>
 
-      <!-- 封面照片區（外部圖床連結 / 上傳照片 / 精選免費圖庫） -->
       <div class="p-4 rounded bg-[#F6F4EF]/80 border border-[#E4E0D6] space-y-3">
         <label id="lblCover" class="block text-xs font-medium uppercase tracking-wider text-stone-600"></label>
 
@@ -61,22 +60,18 @@
           <button type="button" data-tab="gallery" class="cover-tab inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-[#D8D3C6] bg-white text-stone-700"></button>
         </div>
 
-        <!-- Tab 1: 外部連結 -->
         <div id="coverTabUrl">
           <input id="coverUrlInput" type="url"
             class="w-full border border-[#DDD8CC] bg-white rounded px-3 py-2 text-sm focus:outline-none focus:border-stone-900" />
         </div>
 
-        <!-- Tab 2: 上傳照片 -->
         <div id="coverTabUpload" class="hidden space-y-2">
           <input id="coverFileInput" type="file" accept="image/*" class="w-full border border-[#DDD8CC] bg-white rounded p-2 text-xs" />
           <p id="coverUploadStatus" class="text-xs text-stone-500"></p>
         </div>
 
-        <!-- Tab 3: 免費精選圖庫 -->
         <div id="coverTabGallery" class="hidden grid grid-cols-2 sm:grid-cols-3 gap-2.5"></div>
 
-        <!-- 即時預覽 -->
         <div id="coverPreviewWrap" class="hidden relative mt-2">
           <img id="coverPreviewImg" alt="Cover preview" class="w-full h-44 object-cover rounded border border-[#E4E0D6]" />
           <button type="button" id="clearCoverBtn"
@@ -86,13 +81,11 @@
         </div>
       </div>
 
-      <!-- 內容模式 -->
       <div>
         <label id="lblMode" class="block text-xs font-medium uppercase tracking-wider text-stone-500 mb-1.5"></label>
         <select id="mode" class="w-full border border-[#DDD8CC] rounded px-3 py-2 text-sm bg-white"></select>
       </div>
 
-      <!-- 文字編輯區 -->
       <div id="textAreaBox" class="space-y-2">
         <div class="flex items-center justify-between">
           <label id="lblBody" class="block text-xs font-medium uppercase tracking-wider text-stone-500"></label>
@@ -105,7 +98,6 @@
           placeholder="# 標題&#10;行內公式：$E = mc^2$&#10;&#10;$$\int_0^\infty e^{-x^2} dx = \frac{\sqrt{\pi}}{2}$$"></textarea>
       </div>
 
-      <!-- 檔案上傳區 -->
       <div id="fileBox" class="hidden">
         <input id="fileInput" type="file" accept=".pdf,.docx,.pptx,.md,.tex" class="w-full border border-[#DDD8CC] rounded p-2.5 text-sm" />
       </div>
@@ -171,7 +163,6 @@
 
     categoryEl.innerHTML = CATEGORIES.map(c => `<option value="${c.id}">${getCategoryLabel(c, lang)}</option>`).join('');
     langEl.innerHTML = APP_CONFIG.LANGUAGES.map(l => `<option value="${l.code}">${l.label}</option>`).join('');
-    // 預設原文語系跟隨系統預設語言或目前介面語言
     langEl.value = APP_CONFIG.DEFAULT_POST_LANG || lang;
 
     function refreshSubOptions() {
@@ -199,7 +190,6 @@
     rawTextEl.addEventListener('blur', () => runAutoClassify(false));
     document.getElementById('autoDetectBtn').onclick = () => { userManuallyEdited = false; runAutoClassify(true); };
 
-    // === 封面圖片控制邏輯 ===
     let selectedCoverUrl = '';
     const coverUrlInput = document.getElementById('coverUrlInput');
     const coverPreviewWrap = document.getElementById('coverPreviewWrap');
@@ -230,7 +220,6 @@
       }
     });
 
-    // 切換封面分頁
     document.querySelectorAll('.cover-tab').forEach(btn => {
       btn.onclick = () => {
         const tab = btn.dataset.tab;
@@ -246,7 +235,6 @@
       };
     });
 
-    // 渲染精選免費圖庫
     const galleryEl = document.getElementById('coverTabGallery');
     galleryEl.innerHTML = CURATED_COVERS.map(item => `
       <button type="button" data-url="${item.url}"
@@ -262,7 +250,6 @@
       };
     });
 
-    // 上傳封面圖片（ImgBB 優先，退回 Supabase Storage）
     document.getElementById('coverFileInput').addEventListener('change', async (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -278,7 +265,6 @@
       }
     });
 
-    // 快速在內文插入外部圖片連結
     document.getElementById('insertInlineImgBtn').onclick = () => {
       const url = prompt('請貼上外部免費圖片網址（https://...）：');
       if (!url) return;
@@ -309,11 +295,11 @@
         const finalCover = selectedCoverUrl ? validateImageUrl(selectedCoverUrl) : null;
         let postData = {
           title: titleEl.value.trim(),
+          creator_name: document.getElementById('creatorName').value.trim() || null,
           category: categoryEl.value,
           subcategory: subEl.value.trim() || '未分類',
           original_lang: langEl.value,
           cover_image_url: finalCover,
-          creator_name: document.getElementById('creatorName').value.trim() || null,
           format: 'markdown',
           raw_text: null,
           file_url: null
