@@ -3,31 +3,46 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>登入 - 數學與 AI 知識庫</title>
+  <title>登入</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="./styles/editorial.css" />
 </head>
-<body class="bg-slate-50 min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col">
   <div id="navbar"></div>
 
-  <main class="flex-1 flex items-center justify-center px-4">
-    <div class="bg-white p-8 rounded-xl border shadow-sm w-full max-w-md space-y-5">
-      <h1 class="text-2xl font-bold text-center">會員登入 / 註冊</h1>
-      <input id="email" type="email" placeholder="Email 信箱" class="w-full border rounded-lg px-3 py-2" />
-      <input id="password" type="password" placeholder="密碼（至少 6 碼）" class="w-full border rounded-lg px-3 py-2" />
-
-      <div class="flex gap-3">
-        <button id="loginBtn" class="flex-1 bg-slate-800 text-white py-2 rounded-lg hover:bg-slate-700">登入</button>
-        <button id="signupBtn" class="flex-1 border border-slate-300 py-2 rounded-lg hover:bg-slate-100">註冊新帳號</button>
+  <main class="flex-1 flex items-center justify-center px-5 py-12">
+    <div class="bg-white p-8 sm:p-10 rounded-lg border border-[#E4E0D6] w-full max-w-md space-y-5">
+      <div class="text-center space-y-1.5">
+        <p class="font-mono-meta text-[10px] uppercase tracking-[0.2em] text-stone-400">ARCHIVE ACCESS</p>
+        <h1 id="loginTitle" class="font-serif-editorial text-3xl font-semibold text-stone-900"></h1>
       </div>
-      <p id="authMsg" class="text-sm text-center"></p>
+
+      <div class="space-y-3">
+        <input id="email" type="email" class="w-full border border-[#DDD8CC] rounded px-3.5 py-2.5 text-sm focus:outline-none focus:border-stone-900" />
+        <input id="password" type="password" class="w-full border border-[#DDD8CC] rounded px-3.5 py-2.5 text-sm focus:outline-none focus:border-stone-900" />
+      </div>
+
+      <div class="flex gap-3 pt-1">
+        <button id="loginBtn" class="flex-1 bg-stone-900 text-[#F6F4EF] py-2.5 rounded text-sm font-medium hover:bg-stone-700 transition"></button>
+        <button id="signupBtn" class="flex-1 border border-[#D8D3C6] text-stone-700 py-2.5 rounded text-sm hover:bg-[#F6F4EF] transition"></button>
+      </div>
+      <p id="authMsg" class="text-xs text-center"></p>
     </div>
   </main>
 
   <script type="module">
     import { mountNavbar } from './components/navbar.js';
     import { signIn, signUp } from './modules/auth.module.js';
+    import { t } from './modules/i18n.module.js';
 
     mountNavbar();
+    document.title = `${t('loginTitle')} - ${t('siteTitle')}`;
+    document.getElementById('loginTitle').textContent = t('loginTitle');
+    document.getElementById('email').placeholder = t('emailPlaceholder');
+    document.getElementById('password').placeholder = t('passwordPlaceholder');
+    document.getElementById('loginBtn').textContent = t('loginBtn');
+    document.getElementById('signupBtn').textContent = t('signupBtn');
+
     const msg = document.getElementById('authMsg');
 
     document.getElementById('loginBtn').onclick = async () => {
@@ -36,18 +51,18 @@
         window.location.href = './index.html';
       } catch (err) {
         msg.textContent = err.message;
-        msg.className = 'text-sm text-center text-red-500';
+        msg.className = 'text-xs text-center text-red-700';
       }
     };
 
     document.getElementById('signupBtn').onclick = async () => {
       try {
         await signUp(document.getElementById('email').value, document.getElementById('password').value);
-        msg.textContent = '註冊成功！請至信箱點擊驗證連結（或於 Supabase 後台關閉 Email Confirm 直接登入）。';
-        msg.className = 'text-sm text-center text-green-600';
+        msg.textContent = '註冊成功，請至信箱點擊驗證連結（或於後台關閉驗證後直接登入）。';
+        msg.className = 'text-xs text-center text-emerald-700';
       } catch (err) {
         msg.textContent = err.message;
-        msg.className = 'text-sm text-center text-red-500';
+        msg.className = 'text-xs text-center text-red-700';
       }
     };
   </script>
