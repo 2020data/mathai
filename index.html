@@ -10,7 +10,6 @@
 <body class="min-h-screen flex flex-col">
   <div id="navbar"></div>
 
-  <!-- 刊物風格頁首 -->
   <section class="border-b border-[#E4E0D6] bg-white/40">
     <div class="max-w-7xl mx-auto px-5 py-10 sm:py-12">
       <p id="heroSubtitle" class="font-mono-meta text-[11px] uppercase tracking-[0.2em] text-stone-500 mb-3"></p>
@@ -30,7 +29,7 @@
         </div>
 
         <div id="cardGrid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-          <p id="loadingText" class="text-stone-400 col-span-full text-center py-16 font-mono-meta text-xs"></p>
+          <p id="loadingText" class="text-stone-400 col-span-full text-center py-16 font-mono-meta text-xs">載入中...</p>
         </div>
       </section>
     </div>
@@ -42,11 +41,11 @@
     import { getCategoryById, getCategoryLabel } from './config/categories.config.js';
     import { getCurrentUser } from './modules/auth.module.js';
     import { fetchPosts, updatePostCategory } from './modules/db.module.js';
+    import { fetchAllCompetitions } from './modules/competition.module.js';
     import { autoClassifyPost } from './modules/classifier.module.js';
     import { getUiLang, t } from './modules/i18n.module.js';
     import { icon } from './modules/icons.module.js';
-    import { fetchAllCompetitions } from './modules/competition.module.js';
-    
+
     function escapeHtml(str) {
       return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
@@ -64,17 +63,17 @@
     const urlCat = new URLSearchParams(window.location.search).get('cat');
     const state = { category: urlCat || 'all', subcategory: 'all' };
 
-    // 在 renderSidebar 呼叫時多傳入 competitions: allCompetitions：
-    renderSidebar(document.getElementById('sidebarContainer'), allPosts, state, {
-      currentUser,
-      competitions: allCompetitions,
-      onSelect: (category, subcategory) => {
-        state.category = category;
-        state.subcategory = subcategory;
-        renderView();
-      },
-      onAutoClassifyAll: handleBatchAutoClassify
-    });
+    function renderView() {
+      renderSidebar(document.getElementById('sidebarContainer'), allPosts, state, {
+        currentUser,
+        competitions: allCompetitions,
+        onSelect: (category, subcategory) => {
+          state.category = category;
+          state.subcategory = subcategory;
+          renderView();
+        },
+        onAutoClassifyAll: handleBatchAutoClassify
+      });
 
       const filtered = allPosts.filter(post => {
         if (state.category !== 'all' && post.category !== state.category) return false;
@@ -133,13 +132,12 @@
                 </h3>
               </div>
             </div>
-            // 取代卡片底部 footer 區塊：
-        <div class="px-5 py-3 border-t border-[#F0EDE6] flex items-center justify-between gap-2 text-xs text-stone-500">
-          <span class="truncate">
-            ${escapeHtml(sub)}${post.creator_name ? ` · ${escapeHtml(post.creator_name)}` : ''}
-          </span>
-          <span class="font-mono-meta text-[11px] text-stone-400 shrink-0">${dateStr}</span>
-        </div>
+            <div class="px-5 py-3 border-t border-[#F0EDE6] flex items-center justify-between gap-2 text-xs text-stone-500">
+              <span class="truncate">
+                ${escapeHtml(sub)}${post.creator_name ? ` · ${escapeHtml(post.creator_name)}` : ''}
+              </span>
+              <span class="font-mono-meta text-[11px] text-stone-400 shrink-0">${dateStr}</span>
+            </div>
           </a>
         `;
       }).join('');
@@ -174,7 +172,7 @@
       [allPosts, allCompetitions, currentUser] = await Promise.all([
         fetchPosts('all'),
         fetchAllCompetitions().catch(() => []),
-        getCurrentUser()
+        getCurrentUser().catch(() => null)
       ]);
       renderView();
     } catch (err) {
