@@ -1,33 +1,26 @@
 // modules/db.module.js
 import { supabase, getCurrentUser } from './auth.module.js';
 
-// 取得文章列表（支援主分類與子分類篩選）
 export async function fetchPosts(category = 'all', subcategory = 'all') {
   let query = supabase
     .from('posts')
     .select('*')
     .order('created_at', { ascending: false });
 
-  if (category !== 'all') {
-    query = query.eq('category', category);
-  }
-  if (subcategory !== 'all') {
-    query = query.eq('subcategory', subcategory);
-  }
+  if (category !== 'all') query = query.eq('category', category);
+  if (subcategory !== 'all') query = query.eq('subcategory', subcategory);
 
   const { data, error } = await query;
   if (error) throw error;
   return data;
 }
 
-// 取得單篇文章
 export async function fetchPostById(id) {
   const { data, error } = await supabase.from('posts').select('*').eq('id', id).single();
   if (error) throw error;
   return data;
 }
 
-// 上傳檔案至 Supabase Storage
 export async function uploadFile(file) {
   const user = await getCurrentUser();
   if (!user) throw new Error('請先登入後再上傳檔案');
@@ -42,7 +35,6 @@ export async function uploadFile(file) {
   return { url: data.publicUrl, ext };
 }
 
-// 寫入新文章紀錄
 export async function createPost(postData) {
   const user = await getCurrentUser();
   if (!user) throw new Error('請先登入');
@@ -50,6 +42,7 @@ export async function createPost(postData) {
   const { data, error } = await supabase.from('posts').insert([{
     ...postData,
     subcategory: postData.subcategory?.trim() || '未分類',
+    cover_image_url: postData.cover_image_url || null,
     user_id: user.id,
     author_email: user.email
   }]).select().single();
@@ -58,7 +51,6 @@ export async function createPost(postData) {
   return data;
 }
 
-// 手動更新或自動回寫文章的主分類與子分類（僅作者本人可更新，受 RLS 保護）
 export async function updatePostCategory(id, category, subcategory) {
   const user = await getCurrentUser();
   if (!user) throw new Error('請先登入');
@@ -76,7 +68,6 @@ export async function updatePostCategory(id, category, subcategory) {
   return data;
 }
 
-// 刪除文章（若附帶上傳檔案也會嘗試一併移除）
 export async function deletePost(id, fileUrl = null) {
   const user = await getCurrentUser();
   if (!user) throw new Error('請先登入');
