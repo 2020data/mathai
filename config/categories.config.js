@@ -25,6 +25,23 @@ export const CATEGORIES = [
       'en': 'Machine Learning, Deep Learning, LLMs & Algorithms',
       'ja': '機械学習・深層学習・LLMとアルゴリズム研究'
     }
+  },
+  {
+    id: 'competition',
+    name: {
+      'zh-TW': 'UTAR × 東海數學競賽',
+      'en': 'UTAR × THU Math Competition',
+      'ja': 'UTAR × 東海大学 数学競技'
+    },
+    iconKey: 'trophy',
+    monogram: 'Ω',
+    badgeClass: 'text-[#2E4F3E] bg-[#2E4F3E]/10 border-[#2E4F3E]/25',
+    accentHex: '#2E4F3E',
+    description: {
+      'zh-TW': '拉曼大學（UTAR）與台灣東海大學歷年數學競賽紀錄與花絮',
+      'en': 'Annual UTAR & Tunghai University Mathematics Competition Archive',
+      'ja': 'UTARと東海大学の歴代数学競技会アーカイブ'
+    }
   }
 ];
 
