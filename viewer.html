@@ -15,14 +15,13 @@
   <main class="max-w-5xl mx-auto px-5 py-10">
     <a id="backLink" href="./index.html" class="inline-flex items-center gap-1.5 text-xs font-mono-meta text-stone-500 hover:text-stone-900 mb-6 transition"></a>
 
-    <div id="headerBox" class="mb-6"></div>
+    <div id="headerBox" class="mb-4"></div>
     <div id="postShareBar" class="mb-6"></div>
-    <!-- 封面大圖（若有設定封面連結時顯示） -->
+
     <div id="heroCoverBox" class="hidden mb-8 rounded-lg overflow-hidden border border-[#E4E0D6] bg-white">
       <img id="heroCoverImg" alt="" class="w-full max-h-[420px] object-cover" />
     </div>
 
-    <!-- 作者專用：手動修改分類面板 -->
     <div id="editCategoryPanel" class="hidden bg-white border border-[#D8D3C6] p-4 rounded-lg mb-6 text-sm">
       <div class="flex flex-wrap items-center gap-3">
         <span id="editCatLabel" class="inline-flex items-center gap-1.5 text-xs font-medium text-stone-700"></span>
@@ -40,7 +39,6 @@
       </div>
     </div>
 
-    <!-- 線上翻譯工具列 -->
     <div id="translateBar" class="hidden bg-white/90 px-4 py-3 rounded-lg border border-[#E4E0D6] mb-6 flex flex-wrap items-center gap-3 text-xs">
       <span id="translateTitle" class="inline-flex items-center gap-1.5 font-medium text-stone-700"></span>
       <select id="translateMode" class="border border-[#DDD8CC] rounded px-2.5 py-1.5 bg-[#F6F4EF]"></select>
@@ -52,7 +50,6 @@
       <span id="translateStatus" class="font-mono-meta text-[11px] text-stone-500 ml-auto"></span>
     </div>
 
-    <!-- 單欄 / 雙語對照內容區 -->
     <div id="viewerLayout" class="grid grid-cols-1 gap-6">
       <article id="contentContainer" class="editorial-prose bg-white p-7 sm:p-11 rounded-lg border border-[#E4E0D6]">
         <p class="text-stone-400 font-mono-meta text-xs">Loading...</p>
@@ -70,9 +67,10 @@
     import { renderPostContent } from './modules/parser.module.js';
     import { translatePost } from './modules/translator.module.js';
     import { autoClassifyPost, SUGGESTED_SUBCATEGORIES } from './modules/classifier.module.js';
+    import { mountShareBar } from './modules/share.module.js';
     import { getUiLang, t } from './modules/i18n.module.js';
     import { icon } from './modules/icons.module.js';
-    import { mountShareBar } from './modules/share.module.js';
+
     function escapeHtml(str) {
       return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
@@ -106,11 +104,10 @@
       container.innerHTML = `<p class="text-red-700 text-sm">缺少文章 ID，請從首頁進入。</p>`;
     } else {
       try {
-        const [post, currentUser] = await Promise.all([fetchPostById(id), getCurrentUser()]);
+        const [post, currentUser] = await Promise.all([fetchPostById(id), getCurrentUser().catch(() => null)]);
         const isAuthor = currentUser && currentUser.id === post.user_id;
         document.title = `${post.title} - ${t('siteTitle')}`;
 
-        // 顯示封面圖片
         if (post.cover_image_url) {
           const heroImg = document.getElementById('heroCoverImg');
           heroImg.src = post.cover_image_url;
@@ -157,10 +154,8 @@
               ` : ''}
             </div>
             <h1 class="font-serif-editorial text-3xl sm:text-5xl font-semibold text-stone-900 leading-tight">${escapeHtml(post.title)}</h1>
+            ${post.creator_name ? `<p class="mt-2 text-xs font-mono-meta text-stone-500">創作者 / 編輯者：${escapeHtml(post.creator_name)}</p>` : ''}
           `;
-            ${post.creator_name ? `
-        <p class="mt-2 text-xs font-mono-meta text-stone-500">創作者 / 編輯者：${escapeHtml(post.creator_name)}</p>
-        ` : ''}
 
           document.getElementById('toggleEditCatBtn')?.addEventListener('click', () => {
             const panel = document.getElementById('editCategoryPanel');
@@ -183,7 +178,7 @@
             }
           });
         }
-        
+
         document.getElementById('reAutoClassifyBtn').onclick = () => {
           const res = autoClassifyPost(post.title, post.raw_text || '');
           editCatSelect.value = res.category;
@@ -206,17 +201,16 @@
         };
 
         renderHeader();
-        await renderPostContent(container, post);
-        // 放在 renderHeader(); 之後：
         mountShareBar(document.getElementById('postShareBar'), {
           title: post.title,
           url: window.location.href
         });
-        // 線上翻譯與雙語對照
+
+        await renderPostContent(container, post);
+
         if (post.format === 'markdown' || post.format === 'latex') {
           document.getElementById('translateBar').classList.remove('hidden');
 
-          // 若目前介面語系與原文不同，翻譯目標自動選取目前介面語系
           if (uiLang !== post.original_lang) {
             targetLangSelect.value = uiLang;
           } else {
