@@ -35,7 +35,6 @@ export async function uploadFile(file) {
   return { url: data.publicUrl, ext };
 }
 
-// modules/db.module.js（僅修改 createPost 區塊，其餘函式維持不變）
 export async function createPost(postData) {
   const user = await getCurrentUser();
   if (!user) throw new Error('請先登入');
