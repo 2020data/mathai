@@ -35,6 +35,7 @@ export async function uploadFile(file) {
   return { url: data.publicUrl, ext };
 }
 
+// modules/db.module.js（僅修改 createPost 區塊，其餘函式維持不變）
 export async function createPost(postData) {
   const user = await getCurrentUser();
   if (!user) throw new Error('請先登入');
@@ -43,6 +44,7 @@ export async function createPost(postData) {
     ...postData,
     subcategory: postData.subcategory?.trim() || '未分類',
     cover_image_url: postData.cover_image_url || null,
+    creator_name: (postData.creator_name || '').trim() || null,
     user_id: user.id,
     author_email: user.email
   }]).select().single();
