@@ -1,1 +1,5 @@
 
+User-agent: *
+Allow: /
+
+Sitemap: https://2020data.github.io/mathai/sitemap.xml
