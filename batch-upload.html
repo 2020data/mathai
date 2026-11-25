@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>批次打包上傳 | 數理與智識典藏</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- JSZip：瀏覽器端直接解壓 .zip 批次封包，免後端 -->
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <link rel="stylesheet" href="./styles/editorial.css" />
+</head>
+<body class="min-h-screen">
+  <div id="navbar"></div>
+
+  <main class="max-w-4xl mx-auto px-5 py-10 space-y-6">
+    <div class="border-b border-[#E4E0D6] pb-4 flex flex-wrap items-end justify-between gap-3">
+      <div>
+        <p class="font-mono-meta text-[11px] uppercase tracking-[0.18em] text-stone-500">BATCH IMPORT STUDIO</p>
+        <h1 class="font-serif-editorial text-3xl font-semibold text-stone-900">批次打包上傳</h1>
+      </div>
+      <button id="downloadTemplateBtn" type="button"
+        class="text-xs border border-stone-900 px-3.5 py-1.5 rounded-full hover:bg-stone-900 hover:text-white transition">
+        下載 JSON 批次範本
+      </button>
+    </div>
+
+    <!-- 預設統一設定 -->
+    <div class="bg-white rounded-lg border border-[#E4E0D6] p-5 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+      <div>
+        <label class="block text-xs uppercase tracking-wider text-stone-500 mb-1">預設主分類</label>
+        <select id="defaultCategory" class="w-full border border-[#DDD8CC] rounded px-3 py-2 bg-white text-xs">
+          <option value="auto">自動依內容偵測（數學 / AI）</option>
+          <option value="math">強制歸類：數學</option>
+          <option value="ai">強制歸類：人工智慧</option>
+          <option value="competition">強制歸類：UTAR × 東海競賽</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs uppercase tracking-wider text-stone-500 mb-1">預設子分類（選填）</label>
+        <input id="defaultSubcategory" type="text" placeholder="留空則自動判斷" class="w-full border border-[#DDD8CC] rounded px-3 py-2 text-xs" />
+      </div>
+      <div>
+        <label class="block text-xs uppercase tracking-wider text-stone-500 mb-1">預設原文語系</label>
+        <select id="defaultLang" class="w-full border border-[#DDD8CC] rounded px-3 py-2 bg-white text-xs"></select>
+      </div>
+    </div>
+
+    <!-- 方式一：拖曳或選取 .zip / .json / 多個檔案 -->
+    <div class="bg-white rounded-lg border border-dashed border-[#C7C1B5] p-8 text-center space-y-3">
+      <p class="font-serif-editorial text-xl text-stone-800">選擇 .zip 壓縮包、.json 清單，或一次多選 .md / .tex / .pdf / .docx</p>
+      <p class="text-xs text-stone-500">若上傳 .zip 檔，系統會自動解壓並讀取其中的 Markdown / LaTeX 或 posts.json</p>
+      <input id="batchFileInput" type="file" multiple accept=".zip,.json,.md,.tex,.pdf,.docx,.pptx"
+        class="block mx-auto text-xs text-stone-600 file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-stone-900 file:text-white hover:file:bg-stone-700 cursor-pointer" />
+    </div>
+
+    <!-- 方式二：直接貼上 JSON 批次陣列 -->
+    <div class="bg-white rounded-lg border border-[#E4E0D6] p-5 space-y-2">
+      <div class="flex items-center justify-between">
+        <label class="text-xs font-medium uppercase tracking-wider text-stone-500">或直接貼上 JSON 批次陣列</label>
+        <button id="parseJsonBtn" type="button" class="text-xs underline text-stone-700 hover:text-stone-900">解析並加入待上傳佇列</button>
+      </div>
+      <textarea id="jsonPasteBox" rows="5" class="w-full border border-[#DDD8CC] rounded p-3 font-mono-meta text-xs"
+        placeholder='[{"title":"範例文章","category":"math","subcategory":"微積分","original_lang":"zh-TW","cover_image_url":"https://...","raw_text":"# 標題\n公式：$E=mc^2$"}]'></textarea>
+    </div>
+
+    <!-- 待上傳預覽清單與進度 -->
+    <div id="queuePanel" class="hidden bg-white rounded-lg border border-[#E4E0D6] p-6 space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-[#E4E0D6]">
+        <h2 id="queueTitle" class="font-serif-editorial text-xl font-semibold text-stone-900">待上傳項目 (0)</h2>
+        <div class="flex items-center gap-2">
+          <button id="clearQueueBtn" type="button" class="text-xs text-stone-500 hover:text-stone-900">清空佇列</button>
+          <button id="startBatchBtn" type="button" class="bg-stone-900 text-white px-5 py-2 rounded-full text-xs font-medium hover:bg-stone-700 transition">
+            開始批次發布
+          </button>
+        </div>
+      </div>
+
+      <div id="progressWrap" class="hidden space-y-1.5">
+        <div class="w-full bg-[#EFECE5] h-2 rounded-full overflow-hidden">
+          <div id="progressBar" class="bg-[#2E4F3E] h-full w-0 transition-all duration-300"></div>
+        </div>
+        <p id="progressText" class="font-mono-meta text-xs text-stone-600"></p>
+      </div>
+
+      <ul id="queueList" class="divide-y divide-[#F0EDE6] max-h-80 overflow-y-auto text-xs"></ul>
+    </div>
+  </main>
+
+  <script type="module">
+    import { mountNavbar } from './components/navbar.js';
+    import { APP_CONFIG } from './config/app.config.js';
+    import { getCurrentUser } from './modules/auth.module.js';
+    import { uploadFile, createPost } from './modules/db.module.js';
+    import { autoClassifyPost } from './modules/classifier.module.js';
+
+    mountNavbar();
+
+    const user = await getCurrentUser();
+    if (!user) {
+      alert('請先登入才能使用批次打包上傳功能');
+      window.location.href = './login.html';
+    }
+
+    const langEl = document.getElementById('defaultLang');
+    langEl.innerHTML = APP_CONFIG.LANGUAGES.map(l => `<option value="${l.code}">${l.label}</option>`).join('');
+    langEl.value = APP_CONFIG.DEFAULT_POST_LANG || 'zh-TW';
+
+    let queue = []; // { title, category, subcategory, original_lang, format, raw_text, cover_image_url, fileObj }
+
+    function resolveMeta(item) {
+      const defCat = document.getElementById('defaultCategory').value;
+      const defSub = document.getElementById('defaultSubcategory').value.trim();
+      const auto = autoClassifyPost(item.title, item.raw_text || '');
+
+      return {
+        title: item.title || '未命名稿件',
+        category: item.category || (defCat === 'auto' ? auto.category : defCat),
+        subcategory: item.subcategory || defSub || auto.subcategory,
+        original_lang: item.original_lang || langEl.value,
+        format: item.format || 'markdown',
+        raw_text: item.raw_text ?? null,
+        cover_image_url: item.cover_image_url || null,
+        fileObj: item.fileObj || null
+      };
+    }
+
+    function renderQueue() {
+      const panel = document.getElementById('queuePanel');
+      panel.classList.toggle('hidden', queue.length === 0);
+      document.getElementById('queueTitle').textContent = `待上傳項目 (${queue.length})`;
+      document.getElementById('queueList').innerHTML = queue.map((item, i) => `
+        <li class="py-2.5 flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <span class="font-medium text-stone-800">${item.title}</span>
+            <span class="ml-2 font-mono-meta text-[11px] text-stone-400">[${item.category} / ${item.subcategory} · ${item.format}]</span>
+          </div>
+          <span id="qStatus_${i}" class="font-mono-meta text-[11px] text-stone-400 shrink-0">待命</span>
+        </li>
+      `).join('');
+    }
+
+    // 處理多檔 / JSON / ZIP 解析
+    document.getElementById('batchFileInput').addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      for (const file of files) {
+        const ext = file.name.split('.').pop().toLowerCase();
+
+        if (ext === 'json') {
+          try {
+            const arr = JSON.parse(await file.text());
+            if (Array.isArray(arr)) arr.forEach(obj => queue.push(resolveMeta(obj)));
+          } catch (err) {
+            alert(`JSON 檔案 ${file.name} 解析失敗：${err.message}`);
+          }
+        } else if (ext === 'zip') {
+          const zip = await window.JSZip.loadAsync(file);
+          for (const [path, entry] of Object.entries(zip.files)) {
+            if (entry.dir || path.startsWith('__MACOSX')) continue;
+            const innerName = path.split('/').pop();
+            const innerExt = innerName.split('.').pop().toLowerCase();
+            if (innerExt === 'json') {
+              try {
+                const arr = JSON.parse(await entry.async('string'));
+                if (Array.isArray(arr)) arr.forEach(obj => queue.push(resolveMeta(obj)));
+              } catch {}
+            } else if (innerExt === 'md' || innerExt === 'tex') {
+              const text = await entry.async('string');
+              queue.push(resolveMeta({
+                title: innerName.replace(/\.(md|tex)$/i, ''),
+                format: innerExt === 'tex' ? 'latex' : 'markdown',
+                raw_text: text
+              }));
+            }
+          }
+        } else if (ext === 'md' || ext === 'tex') {
+          const text = await file.text();
+          queue.push(resolveMeta({
+            title: file.name.replace(/\.(md|tex)$/i, ''),
+            format: ext === 'tex' ? 'latex' : 'markdown',
+            raw_text: text
+          }));
+        } else {
+          queue.push(resolveMeta({
+            title: file.name.replace(/\.[^.]+$/, ''),
+            format: ext,
+            fileObj: file
+          }));
+        }
+      }
+      renderQueue();
+      e.target.value = '';
+    });
+
+    document.getElementById('parseJsonBtn').onclick = () => {
+      try {
+        const arr = JSON.parse(document.getElementById('jsonPasteBox').value);
+        if (!Array.isArray(arr)) throw new Error('最外層必須為 JSON 陣列 [...]');
+        arr.forEach(obj => queue.push(resolveMeta(obj)));
+        renderQueue();
+      } catch (err) {
+        alert(`JSON 格式錯誤：${err.message}`);
+      }
+    };
+
+    document.getElementById('clearQueueBtn').onclick = () => { queue = []; renderQueue(); };
+
+    // 下載範例 JSON
+    document.getElementById('downloadTemplateBtn').onclick = () => {
+      const sample = [
+        {
+          title: '2025 UTAR × 東海大學數學競賽賽後心得',
+          category: 'competition',
+          subcategory: '2025 競賽花絮',
+          original_lang: 'zh-TW',
+          cover_image_url: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=1200&q=80',
+          raw_text: '# 2025 競賽紀錄\n\n本次交流涵蓋微積分與線性代數題組，核心積分公式：$$\\int_0^\\infty e^{-x^2}dx = \\frac{\\sqrt{\\pi}}{2}$$'
+        }
+      ];
+      const blob = new Blob([JSON.stringify(sample, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'batch-posts-template.json';
+      a.click();
+    };
+
+    // 開始批次執行上傳
+    document.getElementById('startBatchBtn').onclick = async () => {
+      if (!queue.length) return;
+      const btn = document.getElementById('startBatchBtn');
+      const wrap = document.getElementById('progressWrap');
+      const bar = document.getElementById('progressBar');
+      const text = document.getElementById('progressText');
+      btn.disabled = true;
+      wrap.classList.remove('hidden');
+
+      let success = 0;
+      for (let i = 0; i < queue.length; i++) {
+        const item = queue[i];
+        const st = document.getElementById(`qStatus_${i}`);
+        st.textContent = '上傳中...';
+        try {
+          let file_url = null;
+          let format = item.format;
+          if (item.fileObj) {
+            const uploaded = await uploadFile(item.fileObj);
+            file_url = uploaded.url;
+            format = uploaded.ext;
+          }
+          await createPost({
+            title: item.title,
+            category: item.category,
+            subcategory: item.subcategory,
+            original_lang: item.original_lang,
+            cover_image_url: item.cover_image_url,
+            format,
+            raw_text: item.raw_text,
+            file_url
+          });
+          st.textContent = '成功';
+          st.className = 'font-mono-meta text-[11px] text-emerald-700 shrink-0';
+          success++;
+        } catch (err) {
+          st.textContent = `失敗：${err.message}`;
+          st.className = 'font-mono-meta text-[11px] text-red-700 shrink-0';
+        }
+        const pct = Math.round(((i + 1) / queue.length) * 100);
+        bar.style.width = `${pct}%`;
+        text.textContent = `進度：${i + 1} / ${queue.length}（成功 ${success} 筆）`;
+      }
+
+      btn.disabled = false;
+      alert(`批次上傳完成！共成功發布 ${success} / ${queue.length} 筆內容。`);
+    };
+  </script>
+</body>
+</html>
