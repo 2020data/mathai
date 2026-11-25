@@ -1,7 +1,6 @@
 // modules/competition.module.js
 import { supabase, getCurrentUser } from './auth.module.js';
 
-// 取得所有歷年競賽清單（由新到舊）
 export async function fetchAllCompetitions() {
   const { data, error } = await supabase
     .from('competitions')
@@ -12,7 +11,6 @@ export async function fetchAllCompetitions() {
   return data || [];
 }
 
-// 取得單一「年份 + 國家」獨立頁面
 export async function fetchCompetitionPage(year, country) {
   const { data, error } = await supabase
     .from('competitions')
@@ -24,7 +22,6 @@ export async function fetchCompetitionPage(year, country) {
   return data;
 }
 
-// 新增或更新某年度某國頁面
 export async function upsertCompetitionPage(payload) {
   const user = await getCurrentUser();
   if (!user) throw new Error('請先登入後再編輯競賽頁面');
@@ -34,11 +31,10 @@ export async function upsertCompetitionPage(payload) {
     country: payload.country,
     title: payload.title.trim(),
     subtitle: (payload.subtitle || '').trim(),
+    creator_name: (payload.creator_name || '').trim() || null,
     event_date: (payload.event_date || '').trim(),
     location: (payload.location || '').trim(),
     cover_image_url: (payload.cover_image_url || '').trim() || null,
-     // 加在 upsertCompetitionPage 的 record 物件內：
-    creator_name: (payload.creator_name || '').trim() || null,
     gallery_items: Array.isArray(payload.gallery_items) ? payload.gallery_items : [],
     overview_md: payload.overview_md || '',
     committee_md: payload.committee_md || '',
@@ -58,7 +54,6 @@ export async function upsertCompetitionPage(payload) {
   return data;
 }
 
-// 【隔年延續核心功能】將當年度架構、委員會與子頁面一鍵複製到隔年（year + 1）
 export async function cloneCompetitionToNextYear(sourceRecord) {
   const user = await getCurrentUser();
   if (!user) throw new Error('請先登入');
