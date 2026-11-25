@@ -5,9 +5,7 @@ export const APP_CONFIG = {
   SUPABASE_ANON_KEY: 'sb_publishable_YCOSJ188iooLujN7oieZPg_qVHU0ybs',
 
   // === Google 站內搜尋設定 ===
-  // 留空 '' 時會自動抓目前網址網域；若部署在 GitHub Pages 可填如 'username.github.io/repo-name'
   SITE_DOMAIN: '',
-  // 選填：若有申請 Google Programmable Search Engine (CSE)，填入 cx 代碼即可啟用專屬搜尋頁
   GOOGLE_CSE_CX: '',
 
   // === 全站預設語言設定（'zh-TW' | 'en' | 'ja'）===
@@ -19,13 +17,30 @@ export const APP_CONFIG = {
 
   DEFAULT_LOCAL_TRANSLATE_URL: 'http://localhost:5000/translate',
 
+  // 網站介面語系（導覽列切換用）
   LANGUAGES: [
     { code: 'zh-TW', label: '繁體中文', short: '繁中' },
     { code: 'en', label: 'English', short: 'EN' },
     { code: 'ja', label: '日本語', short: '日本語' }
   ],
 
-  // === UTAR × 東海大學數學競賽：獨立國家頁面設定（未來可自由新增國家）===
+  // 跨國多語言翻譯專頁支援語系（可自由增減）
+  TRANSLATE_LANGUAGES: [
+    { code: 'zh-TW', label: '繁體中文 (Traditional Chinese)', region: '台灣 / 港澳' },
+    { code: 'en', label: 'English', region: 'International' },
+    { code: 'ms', label: 'Bahasa Melayu', region: 'Malaysia (UTAR)' },
+    { code: 'zh-CN', label: '简体中文 (Simplified Chinese)', region: '華語圈' },
+    { code: 'ja', label: '日本語 (Japanese)', region: '日本' },
+    { code: 'ko', label: '한국어 (Korean)', region: '대한민국' },
+    { code: 'id', label: 'Bahasa Indonesia', region: 'Indonesia' },
+    { code: 'th', label: 'ไทย (Thai)', region: 'ประเทศไทย' },
+    { code: 'vi', label: 'Tiếng Việt', region: 'Việt Nam' },
+    { code: 'fr', label: 'Français', region: 'France' },
+    { code: 'de', label: 'Deutsch', region: 'Deutschland' },
+    { code: 'es', label: 'Español', region: 'España / LatAm' }
+  ],
+
+  // === UTAR × 東海大學數學競賽：獨立國家頁面設定 ===
   COMPETITION_COUNTRIES: [
     {
       code: 'TW',
