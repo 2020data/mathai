@@ -171,7 +171,11 @@
 
     mountNavbar();
     try {
-      [allPosts, currentUser] = await Promise.all([fetchPosts('all'), getCurrentUser()]);
+      [allPosts, allCompetitions, currentUser] = await Promise.all([
+        fetchPosts('all'),
+        fetchAllCompetitions().catch(() => []),
+        getCurrentUser()
+      ]);
       renderView();
     } catch (err) {
       document.getElementById('cardGrid').innerHTML =
