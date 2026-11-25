@@ -343,7 +343,7 @@
             </div>
             <h2 class="font-serif-editorial text-3xl sm:text-4xl font-semibold text-stone-900">${esc(record.title)}</h2>
             ${record.subtitle ? `<p class="text-stone-600 text-sm sm:text-base">${esc(record.subtitle)}</p>` : ''}
-
+            ${record.creator_name ? `<p class="text-xs font-mono-meta text-stone-500">創作者 / 編輯者：${esc(record.creator_name)}</p>` : ''}
             <!-- 社群分享列：FB / IG / WhatsApp / LINE -->
             <div id="compShareBar" class="pt-4 border-t border-[#F0EDE6]"></div>
           </div>
@@ -426,7 +426,7 @@
       document.getElementById('fOverview').value = record?.overview_md || '';
       document.getElementById('fCommittee').value = record?.committee_md || '';
       document.getElementById('fStaff').value = record?.staff_md || '';
-
+      document.getElementById('fCreator').value = record?.creator_name || '';
       document.getElementById('galleryRows').innerHTML = '';
       (record?.gallery_items || []).forEach(appendGalleryRow);
 
@@ -469,6 +469,7 @@
           overview_md: document.getElementById('fOverview').value,
           committee_md: document.getElementById('fCommittee').value,
           staff_md: document.getElementById('fStaff').value,
+          creator_name: document.getElementById('fCreator').value.trim() || null,
           extra_subpages
         });
 
