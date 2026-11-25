@@ -1,8 +1,8 @@
 // config/app.config.js
 export const APP_CONFIG = {
   // 【請填入您的 Supabase 專案資訊】
-  SUPABASE_URL: 'https://你的專案ID.supabase.co',
-  SUPABASE_ANON_KEY: '你的_ANON_PUBLIC_KEY',
+  SUPABASE_URL: 'https://anrieosjlabjrpqxkbwf.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_YCOSJ188iooLujN7oieZPg_qVHU0ybs',
 
   // === 1. 全站預設語言設定（可改為 'zh-TW' | 'en' | 'ja'）===
   DEFAULT_UI_LANG: 'zh-TW',
