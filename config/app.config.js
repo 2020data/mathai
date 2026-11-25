@@ -1,8 +1,8 @@
 // config/app.config.js
 export const APP_CONFIG = {
   // 【請保留您真實的 Supabase 專案資訊（純英數）】
-  SUPABASE_URL: 'https://your-project-id.supabase.co',
-  SUPABASE_ANON_KEY: 'your_anon_public_key',
+  SUPABASE_URL: 'https://anrieosjlabjrpqxkbwf.supabase.co',
+  SUPABASE_ANON_KEY: 'sb_publishable_YCOSJ188iooLujN7oieZPg_qVHU0ybs',
 
   // === Google 站內搜尋設定 ===
   SITE_DOMAIN: '2020data.github.io/mathai',
