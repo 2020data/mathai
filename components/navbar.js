@@ -8,13 +8,14 @@ export async function mountNavbar(targetId = 'navbar') {
   const el = document.getElementById(targetId);
   if (!el) return;
 
-  const [user, currentLang] = [await getCurrentUser(), getUiLang()];
+  const [user, currentLang] = [await getCurrentUser().catch(() => null), getUiLang()];
   document.documentElement.lang = currentLang;
 
   const path = window.location.pathname;
   const params = new URLSearchParams(window.location.search);
   const activeCat = params.get('cat');
   const isCompPage = path.includes('competition.html');
+  const isTranslatePage = path.includes('translate.html');
 
   el.innerHTML = `
     <header class="bg-[#F6F4EF]/95 backdrop-blur-md border-b border-[#E4E0D6] sticky top-0 z-50 shadow-sm">
@@ -64,7 +65,7 @@ export async function mountNavbar(targetId = 'navbar') {
           </div>
         </div>
 
-        <!-- 第二列：高顯眼度類別快速導覽列（吸引點選） -->
+        <!-- 第二列：高顯眼度類別與跨國翻譯快速導覽列 -->
         <nav class="py-2.5 border-t border-[#E4E0D6]/80 flex items-center gap-2.5 overflow-x-auto no-scrollbar">
           <a href="./competition.html"
             class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold tracking-wide transition-all duration-200 whitespace-nowrap shadow-sm hover:-translate-y-0.5 hover:shadow
@@ -73,6 +74,15 @@ export async function mountNavbar(targetId = 'navbar') {
               : 'bg-[#2E4F3E]/12 text-[#2E4F3E] border border-[#2E4F3E]/35 hover:bg-[#2E4F3E] hover:text-white'}">
             ${icon('trophy', 'w-4 h-4')}
             <span>UTAR × 東海數學競賽</span>
+          </a>
+
+          <a href="./translate.html"
+            class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold tracking-wide transition-all duration-200 whitespace-nowrap shadow-sm hover:-translate-y-0.5 hover:shadow
+            ${isTranslatePage
+              ? 'bg-[#3B4252] text-white ring-2 ring-[#3B4252]/30'
+              : 'bg-[#3B4252]/10 text-[#3B4252] border border-[#3B4252]/30 hover:bg-[#3B4252] hover:text-white'}">
+            ${icon('globe', 'w-4 h-4')}
+            <span>跨國多語翻譯</span>
           </a>
 
           <a href="./index.html?cat=math"
@@ -95,7 +105,7 @@ export async function mountNavbar(targetId = 'navbar') {
 
           <a href="./index.html"
             class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap
-            ${!isCompPage && !activeCat
+            ${!isCompPage && !isTranslatePage && !activeCat
               ? 'bg-stone-900 text-[#F6F4EF]'
               : 'bg-white text-stone-700 border border-[#D8D3C6] hover:bg-stone-900 hover:text-white'}">
             ${icon('grid', 'w-3.5 h-3.5')}
