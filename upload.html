@@ -26,7 +26,12 @@
           class="w-full border border-[#DDD8CC] rounded px-3.5 py-2.5 text-sm focus:outline-none focus:border-stone-900"
           placeholder="例如：高斯積分的極座標推導" />
       </div>
-
+      <div>
+        <label class="block text-xs font-medium uppercase tracking-wider text-stone-500 mb-1.5">創作者 / 編輯者（選填，可留空）</label>
+        <input id="creatorName" type="text"
+          class="w-full border border-[#DDD8CC] rounded px-3.5 py-2 text-sm focus:outline-none focus:border-stone-900"
+          placeholder="例如：王小明 / 東海應數編輯組（不填則不顯示）" />
+      </div>
       <!-- 主分類 / 子分類 / 語系 -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
@@ -308,6 +313,7 @@
           subcategory: subEl.value.trim() || '未分類',
           original_lang: langEl.value,
           cover_image_url: finalCover,
+          creator_name: document.getElementById('creatorName').value.trim() || null,
           format: 'markdown',
           raw_text: null,
           file_url: null
