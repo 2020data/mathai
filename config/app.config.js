@@ -21,7 +21,19 @@ export const APP_CONFIG = {
   LANGUAGES: [
     { code: 'zh-TW', label: '繁體中文', short: '繁中' },
     { code: 'en', label: 'English', short: 'EN' },
-    { code: 'ja', label: '日本語', short: '日本語' }
+    { code: 'ja', label: '日本語', short: '日本語' },
+    { code: 'zh-TW', label: '繁體中文 (Traditional Chinese)', region: '台灣 / 港澳' },
+    { code: 'en', label: 'English', region: 'International' },
+    { code: 'ms', label: 'Bahasa Melayu', region: 'Malaysia (UTAR)' },
+    { code: 'zh-CN', label: '简体中文 (Simplified Chinese)', region: '華語圈' },
+    { code: 'ja', label: '日本語 (Japanese)', region: '日本' },
+    { code: 'ko', label: '한국어 (Korean)', region: '대한민국' },
+    { code: 'id', label: 'Bahasa Indonesia', region: 'Indonesia' },
+    { code: 'th', label: 'ไทย (Thai)', region: 'ประเทศไทย' },
+    { code: 'vi', label: 'Tiếng Việt', region: 'Việt Nam' },
+    { code: 'fr', label: 'Français', region: 'France' },
+    { code: 'de', label: 'Deutsch', region: 'Deutschland' },
+    { code: 'es', label: 'Español', region: 'España / LatAm' }
   ],
 
   // 跨國多語言翻譯專頁支援語系（可自由增減）
