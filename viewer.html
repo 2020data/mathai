@@ -22,6 +22,7 @@
       <img id="heroCoverImg" alt="" class="w-full max-h-[420px] object-cover" />
     </div>
 
+    <!-- 作者專用：手動修改分類面板 -->
     <div id="editCategoryPanel" class="hidden bg-white border border-[#D8D3C6] p-4 rounded-lg mb-6 text-sm">
       <div class="flex flex-wrap items-center gap-3">
         <span id="editCatLabel" class="inline-flex items-center gap-1.5 text-xs font-medium text-stone-700"></span>
@@ -39,35 +40,20 @@
       </div>
     </div>
 
-    <div id="translateBar" class="hidden bg-white/90 px-4 py-3 rounded-lg border border-[#E4E0D6] mb-6 flex flex-wrap items-center gap-3 text-xs">
-      <span id="translateTitle" class="inline-flex items-center gap-1.5 font-medium text-stone-700"></span>
-      <select id="translateMode" class="border border-[#DDD8CC] rounded px-2.5 py-1.5 bg-[#F6F4EF]"></select>
-      <select id="targetLang" class="border border-[#DDD8CC] rounded px-2.5 py-1.5 bg-[#F6F4EF]"></select>
-
-      <button id="translateBtn" class="bg-stone-900 text-[#F6F4EF] px-3.5 py-1.5 rounded hover:bg-stone-700 transition"></button>
-      <button id="bilingualBtn" class="hidden inline-flex items-center gap-1 border border-[#D8D3C6] text-stone-700 px-3 py-1.5 rounded hover:bg-[#F6F4EF]"></button>
-      <button id="resetOrigBtn" class="hidden inline-flex items-center gap-1 text-stone-500 hover:text-stone-900 underline underline-offset-4"></button>
-      <span id="translateStatus" class="font-mono-meta text-[11px] text-stone-500 ml-auto"></span>
-    </div>
-
-    <div id="viewerLayout" class="grid grid-cols-1 gap-6">
-      <article id="contentContainer" class="editorial-prose bg-white p-7 sm:p-11 rounded-lg border border-[#E4E0D6]">
-        <p class="text-stone-400 font-mono-meta text-xs">Loading...</p>
-      </article>
-      <article id="translatedContainer" class="hidden editorial-prose bg-[#FAF9F5] p-7 sm:p-11 rounded-lg border border-[#D8D3C6]"></article>
-    </div>
+    <article id="contentContainer" class="editorial-prose bg-white p-7 sm:p-11 rounded-lg border border-[#E4E0D6]">
+      <p class="text-stone-400 font-mono-meta text-xs">Loading...</p>
+    </article>
   </main>
 
   <script type="module">
     import { mountNavbar } from './components/navbar.js';
-    import { APP_CONFIG } from './config/app.config.js';
     import { CATEGORIES, getCategoryById, getCategoryLabel } from './config/categories.config.js';
     import { getCurrentUser } from './modules/auth.module.js';
     import { fetchPostById, deletePost, updatePostCategory } from './modules/db.module.js';
     import { renderPostContent } from './modules/parser.module.js';
-    import { translatePost } from './modules/translator.module.js';
     import { autoClassifyPost, SUGGESTED_SUBCATEGORIES } from './modules/classifier.module.js';
     import { mountShareBar } from './modules/share.module.js';
+    import { autoTranslateIfNeeded } from './modules/translator.module.js';
     import { getUiLang, t } from './modules/i18n.module.js';
     import { icon } from './modules/icons.module.js';
 
@@ -83,19 +69,6 @@
     document.getElementById('reAutoClassifyBtn').innerHTML = `${icon('compass', 'w-3.5 h-3.5')} <span>${t('reAutoDetect')}</span>`;
     document.getElementById('saveCategoryBtn').textContent = t('saveCategory');
     document.getElementById('cancelCategoryBtn').textContent = t('cancel');
-    document.getElementById('translateTitle').innerHTML = `${icon('globe', 'w-3.5 h-3.5')} <span>${t('translateLabel')}</span>`;
-    document.getElementById('translateBtn').textContent = t('translateNow');
-    document.getElementById('bilingualBtn').innerHTML = `${icon('columns', 'w-3.5 h-3.5')} <span>${t('bilingualOn')}</span>`;
-    document.getElementById('resetOrigBtn').innerHTML = `${icon('reset', 'w-3.5 h-3.5')} <span>${t('resetOrig')}</span>`;
-
-    document.getElementById('translateMode').innerHTML = `
-      <option value="free">${t('translateFree')}</option>
-      <option value="cloud">${t('translateCloud')}</option>
-      <option value="local">${t('translateLocal')}</option>
-    `;
-
-    const targetLangSelect = document.getElementById('targetLang');
-    targetLangSelect.innerHTML = APP_CONFIG.LANGUAGES.map(l => `<option value="${l.code}">${l.label}</option>`).join('');
 
     const id = new URLSearchParams(window.location.search).get('id');
     const container = document.getElementById('contentContainer');
@@ -207,75 +180,7 @@
         });
 
         await renderPostContent(container, post);
-
-        if (post.format === 'markdown' || post.format === 'latex') {
-          document.getElementById('translateBar').classList.remove('hidden');
-
-          if (uiLang !== post.original_lang) {
-            targetLangSelect.value = uiLang;
-          } else {
-            const fallback = APP_CONFIG.LANGUAGES.find(l => l.code !== post.original_lang);
-            if (fallback) targetLangSelect.value = fallback.code;
-          }
-
-          let currentTranslatedText = null;
-          let isBilingual = false;
-          const layout = document.getElementById('viewerLayout');
-          const transBox = document.getElementById('translatedContainer');
-          const status = document.getElementById('translateStatus');
-          const bilingualBtn = document.getElementById('bilingualBtn');
-          const resetBtn = document.getElementById('resetOrigBtn');
-
-          async function refreshView() {
-            if (!currentTranslatedText) {
-              layout.className = 'grid grid-cols-1 gap-6';
-              transBox.classList.add('hidden');
-              await renderPostContent(container, post);
-              return;
-            }
-            if (isBilingual) {
-              layout.className = 'grid grid-cols-1 lg:grid-cols-2 gap-6';
-              transBox.classList.remove('hidden');
-              await renderPostContent(container, post);
-              await renderPostContent(transBox, post, currentTranslatedText);
-            } else {
-              layout.className = 'grid grid-cols-1 gap-6';
-              transBox.classList.add('hidden');
-              await renderPostContent(container, post, currentTranslatedText);
-            }
-          }
-
-          document.getElementById('translateBtn').onclick = async () => {
-            status.textContent = 'Translating...';
-            try {
-              const mode = document.getElementById('translateMode').value;
-              const target = targetLangSelect.value;
-              const { text, fromCache } = await translatePost(post, target, mode);
-              currentTranslatedText = text;
-              bilingualBtn.classList.remove('hidden');
-              resetBtn.classList.remove('hidden');
-              status.textContent = fromCache ? 'Cached' : 'Done';
-              await refreshView();
-            } catch (err) {
-              status.textContent = err.message;
-            }
-          };
-
-          bilingualBtn.onclick = async () => {
-            isBilingual = !isBilingual;
-            bilingualBtn.innerHTML = `${icon('columns', 'w-3.5 h-3.5')} <span>${isBilingual ? t('bilingualOff') : t('bilingualOn')}</span>`;
-            await refreshView();
-          };
-
-          resetBtn.onclick = async () => {
-            currentTranslatedText = null;
-            isBilingual = false;
-            bilingualBtn.classList.add('hidden');
-            resetBtn.classList.add('hidden');
-            status.textContent = '';
-            await refreshView();
-          };
-        }
+        autoTranslateIfNeeded(150);
       } catch (err) {
         container.innerHTML = `<p class="text-red-700 text-sm">無法載入內容：${err.message}</p>`;
       }
