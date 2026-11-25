@@ -45,7 +45,8 @@
     import { autoClassifyPost } from './modules/classifier.module.js';
     import { getUiLang, t } from './modules/i18n.module.js';
     import { icon } from './modules/icons.module.js';
-
+    import { fetchAllCompetitions } from './modules/competition.module.js';
+    
     function escapeHtml(str) {
       return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
@@ -58,19 +59,22 @@
     document.getElementById('loadingText').textContent = t('loading');
 
     let allPosts = [];
+    let allCompetitions = [];
     let currentUser = null;
-    const state = { category: 'all', subcategory: 'all' };
+    const urlCat = new URLSearchParams(window.location.search).get('cat');
+    const state = { category: urlCat || 'all', subcategory: 'all' };
 
-    function renderView() {
-      renderSidebar(document.getElementById('sidebarContainer'), allPosts, state, {
-        currentUser,
-        onSelect: (category, subcategory) => {
-          state.category = category;
-          state.subcategory = subcategory;
-          renderView();
-        },
-        onAutoClassifyAll: handleBatchAutoClassify
-      });
+    // 在 renderSidebar 呼叫時多傳入 competitions: allCompetitions：
+    renderSidebar(document.getElementById('sidebarContainer'), allPosts, state, {
+      currentUser,
+      competitions: allCompetitions,
+      onSelect: (category, subcategory) => {
+        state.category = category;
+        state.subcategory = subcategory;
+        renderView();
+      },
+      onAutoClassifyAll: handleBatchAutoClassify
+    });
 
       const filtered = allPosts.filter(post => {
         if (state.category !== 'all' && post.category !== state.category) return false;
@@ -129,10 +133,13 @@
                 </h3>
               </div>
             </div>
-            <div class="px-5 py-3 border-t border-[#F0EDE6] flex items-center justify-between text-xs text-stone-500">
-              <span class="truncate max-w-[65%]">${escapeHtml(sub)}</span>
-              <span class="font-mono-meta text-[11px] text-stone-400">${dateStr}</span>
-            </div>
+            // 取代卡片底部 footer 區塊：
+        <div class="px-5 py-3 border-t border-[#F0EDE6] flex items-center justify-between gap-2 text-xs text-stone-500">
+          <span class="truncate">
+            ${escapeHtml(sub)}${post.creator_name ? ` · ${escapeHtml(post.creator_name)}` : ''}
+          </span>
+          <span class="font-mono-meta text-[11px] text-stone-400 shrink-0">${dateStr}</span>
+        </div>
           </a>
         `;
       }).join('');
