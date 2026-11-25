@@ -72,7 +72,7 @@
     import { autoClassifyPost, SUGGESTED_SUBCATEGORIES } from './modules/classifier.module.js';
     import { getUiLang, t } from './modules/i18n.module.js';
     import { icon } from './modules/icons.module.js';
-
+    import { mountShareBar } from './modules/share.module.js';
     function escapeHtml(str) {
       return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
@@ -180,7 +180,7 @@
             }
           });
         }
-
+        
         document.getElementById('reAutoClassifyBtn').onclick = () => {
           const res = autoClassifyPost(post.title, post.raw_text || '');
           editCatSelect.value = res.category;
@@ -204,7 +204,11 @@
 
         renderHeader();
         await renderPostContent(container, post);
-
+        // 放在 renderHeader(); 之後：
+        mountShareBar(document.getElementById('postShareBar'), {
+          title: post.title,
+          url: window.location.href
+        });
         // 線上翻譯與雙語對照
         if (post.format === 'markdown' || post.format === 'latex') {
           document.getElementById('translateBar').classList.remove('hidden');
