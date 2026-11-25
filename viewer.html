@@ -3,149 +3,177 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>內容瀏覽</title>
+  <title>典藏瀏覽</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- KaTeX 數學公式樣式 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
-  <!-- Mammoth.js 用於前端解析 Word (.docx) -->
   <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+  <link rel="stylesheet" href="./styles/editorial.css" />
 </head>
-<body class="bg-slate-50 min-h-screen">
+<body class="min-h-screen">
   <div id="navbar"></div>
 
-  <main class="max-w-5xl mx-auto px-4 py-8">
-    <div id="headerBox" class="mb-4"></div>
+  <main class="max-w-5xl mx-auto px-5 py-10">
+    <a id="backLink" href="./index.html" class="inline-flex items-center gap-1.5 text-xs font-mono-meta text-stone-500 hover:text-stone-900 mb-6 transition"></a>
 
-    <!-- 作者專用：手動更改分類面板（預設隱藏） -->
-    <div id="editCategoryPanel" class="hidden bg-indigo-50/70 border border-indigo-200 p-4 rounded-xl mb-6 text-sm">
+    <div id="headerBox" class="mb-6"></div>
+
+    <!-- 封面大圖（若有設定封面連結時顯示） -->
+    <div id="heroCoverBox" class="hidden mb-8 rounded-lg overflow-hidden border border-[#E4E0D6] bg-white">
+      <img id="heroCoverImg" alt="" class="w-full max-h-[420px] object-cover" />
+    </div>
+
+    <!-- 作者專用：手動修改分類面板 -->
+    <div id="editCategoryPanel" class="hidden bg-white border border-[#D8D3C6] p-4 rounded-lg mb-6 text-sm">
       <div class="flex flex-wrap items-center gap-3">
-        <span class="font-semibold text-indigo-900">🏷️ 修改文章分類：</span>
-        <select id="editCategorySelect" class="border rounded-lg px-2.5 py-1.5 bg-white"></select>
+        <span id="editCatLabel" class="inline-flex items-center gap-1.5 text-xs font-medium text-stone-700"></span>
+        <select id="editCategorySelect" class="border border-[#DDD8CC] rounded px-2.5 py-1.5 text-xs bg-white"></select>
         <input id="editSubcategoryInput" list="editSubList" type="text"
-          class="border rounded-lg px-2.5 py-1.5 bg-white w-44" placeholder="輸入或選擇子分類" />
+          class="border border-[#DDD8CC] rounded px-2.5 py-1.5 text-xs bg-white w-44" />
         <datalist id="editSubList"></datalist>
 
         <button id="reAutoClassifyBtn" type="button"
-          class="border border-indigo-300 bg-white text-indigo-700 px-3 py-1.5 rounded-lg hover:bg-indigo-50">
-          ✨ 重新自動判斷
-        </button>
+          class="inline-flex items-center gap-1 text-xs border border-[#D8D3C6] px-3 py-1.5 rounded hover:bg-[#F6F4EF]"></button>
         <button id="saveCategoryBtn" type="button"
-          class="bg-indigo-600 text-white px-4 py-1.5 rounded-lg hover:bg-indigo-700 font-medium">
-          儲存分類
-        </button>
-        <button id="cancelCategoryBtn" type="button" class="text-slate-500 hover:text-slate-800">
-          取消
-        </button>
-        <span id="editCategoryStatus" class="text-xs text-indigo-700 ml-auto"></span>
+          class="text-xs bg-stone-900 text-[#F6F4EF] px-4 py-1.5 rounded hover:bg-stone-700"></button>
+        <button id="cancelCategoryBtn" type="button" class="text-xs text-stone-500 hover:text-stone-900"></button>
+        <span id="editCategoryStatus" class="font-mono-meta text-xs text-stone-500 ml-auto"></span>
       </div>
     </div>
 
-    <!-- 線上翻譯工具列（僅在純文字/MD/LaTeX 顯示） -->
-    <div id="translateBar" class="hidden bg-white p-4 rounded-xl border mb-6 flex flex-wrap items-center gap-3 text-sm shadow-sm">
-      <span class="font-semibold text-slate-700">🌐 線上翻譯：</span>
-      <select id="translateMode" class="border rounded-lg px-2.5 py-1.5 bg-slate-50">
-        <option value="free">免費線上翻譯 (直接用)</option>
-        <option value="cloud">雲端 AI 翻譯 (Supabase)</option>
-        <option value="local">地端本機 API (Localhost)</option>
-      </select>
-      <select id="targetLang" class="border rounded-lg px-2.5 py-1.5 bg-slate-50"></select>
+    <!-- 線上翻譯工具列 -->
+    <div id="translateBar" class="hidden bg-white/90 px-4 py-3 rounded-lg border border-[#E4E0D6] mb-6 flex flex-wrap items-center gap-3 text-xs">
+      <span id="translateTitle" class="inline-flex items-center gap-1.5 font-medium text-stone-700"></span>
+      <select id="translateMode" class="border border-[#DDD8CC] rounded px-2.5 py-1.5 bg-[#F6F4EF]"></select>
+      <select id="targetLang" class="border border-[#DDD8CC] rounded px-2.5 py-1.5 bg-[#F6F4EF]"></select>
 
-      <button id="translateBtn" class="bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition">
-        立即翻譯
-      </button>
-      <button id="bilingualBtn" class="hidden border border-slate-300 text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100">
-        切換雙語對照
-      </button>
-      <button id="resetOrigBtn" class="hidden text-slate-500 hover:text-slate-800 underline">
-        還原原文
-      </button>
-      <span id="translateStatus" class="text-xs text-slate-500 ml-auto"></span>
+      <button id="translateBtn" class="bg-stone-900 text-[#F6F4EF] px-3.5 py-1.5 rounded hover:bg-stone-700 transition"></button>
+      <button id="bilingualBtn" class="hidden inline-flex items-center gap-1 border border-[#D8D3C6] text-stone-700 px-3 py-1.5 rounded hover:bg-[#F6F4EF]"></button>
+      <button id="resetOrigBtn" class="hidden inline-flex items-center gap-1 text-stone-500 hover:text-stone-900 underline underline-offset-4"></button>
+      <span id="translateStatus" class="font-mono-meta text-[11px] text-stone-500 ml-auto"></span>
     </div>
 
-    <!-- 支援單欄與左右雙語對照的內容容器 -->
+    <!-- 單欄 / 雙語對照內容區 -->
     <div id="viewerLayout" class="grid grid-cols-1 gap-6">
-      <article id="contentContainer" class="bg-white p-6 sm:p-8 rounded-xl border shadow-sm">
-        <p class="text-slate-400">載入中...</p>
+      <article id="contentContainer" class="editorial-prose bg-white p-7 sm:p-11 rounded-lg border border-[#E4E0D6]">
+        <p class="text-stone-400 font-mono-meta text-xs">Loading...</p>
       </article>
-      <article id="translatedContainer" class="hidden bg-blue-50/30 p-6 sm:p-8 rounded-xl border border-blue-200 shadow-sm"></article>
+      <article id="translatedContainer" class="hidden editorial-prose bg-[#FAF9F5] p-7 sm:p-11 rounded-lg border border-[#D8D3C6]"></article>
     </div>
   </main>
 
   <script type="module">
     import { mountNavbar } from './components/navbar.js';
     import { APP_CONFIG } from './config/app.config.js';
-    import { CATEGORIES, getCategoryById } from './config/categories.config.js';
+    import { CATEGORIES, getCategoryById, getCategoryLabel } from './config/categories.config.js';
     import { getCurrentUser } from './modules/auth.module.js';
     import { fetchPostById, deletePost, updatePostCategory } from './modules/db.module.js';
     import { renderPostContent } from './modules/parser.module.js';
     import { translatePost } from './modules/translator.module.js';
     import { autoClassifyPost, SUGGESTED_SUBCATEGORIES } from './modules/classifier.module.js';
+    import { getUiLang, t } from './modules/i18n.module.js';
+    import { icon } from './modules/icons.module.js';
+
+    function escapeHtml(str) {
+      return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
 
     mountNavbar();
+    const uiLang = getUiLang();
+
+    document.getElementById('backLink').innerHTML = `${icon('arrowLeft', 'w-3.5 h-3.5')} <span>${t('backToIndex')}</span>`;
+    document.getElementById('editCatLabel').innerHTML = `${icon('tag', 'w-3.5 h-3.5')} <span>${t('editCategory')}</span>`;
+    document.getElementById('reAutoClassifyBtn').innerHTML = `${icon('compass', 'w-3.5 h-3.5')} <span>${t('reAutoDetect')}</span>`;
+    document.getElementById('saveCategoryBtn').textContent = t('saveCategory');
+    document.getElementById('cancelCategoryBtn').textContent = t('cancel');
+    document.getElementById('translateTitle').innerHTML = `${icon('globe', 'w-3.5 h-3.5')} <span>${t('translateLabel')}</span>`;
+    document.getElementById('translateBtn').textContent = t('translateNow');
+    document.getElementById('bilingualBtn').innerHTML = `${icon('columns', 'w-3.5 h-3.5')} <span>${t('bilingualOn')}</span>`;
+    document.getElementById('resetOrigBtn').innerHTML = `${icon('reset', 'w-3.5 h-3.5')} <span>${t('resetOrig')}</span>`;
+
+    document.getElementById('translateMode').innerHTML = `
+      <option value="free">${t('translateFree')}</option>
+      <option value="cloud">${t('translateCloud')}</option>
+      <option value="local">${t('translateLocal')}</option>
+    `;
 
     const targetLangSelect = document.getElementById('targetLang');
-    targetLangSelect.innerHTML = APP_CONFIG.LANGUAGES
-      .map(l => `<option value="${l.code}">${l.label}</option>`)
-      .join('');
+    targetLangSelect.innerHTML = APP_CONFIG.LANGUAGES.map(l => `<option value="${l.code}">${l.label}</option>`).join('');
 
     const id = new URLSearchParams(window.location.search).get('id');
     const container = document.getElementById('contentContainer');
 
     if (!id) {
-      container.innerHTML = `<p class="text-red-500">缺少文章 ID，請從 <a href="./index.html" class="underline text-blue-600">首頁</a> 點選文章進入。</p>`;
+      container.innerHTML = `<p class="text-red-700 text-sm">缺少文章 ID，請從首頁進入。</p>`;
     } else {
       try {
-        const [post, currentUser] = await Promise.all([
-          fetchPostById(id),
-          getCurrentUser()
-        ]);
+        const [post, currentUser] = await Promise.all([fetchPostById(id), getCurrentUser()]);
         const isAuthor = currentUser && currentUser.id === post.user_id;
-        document.title = post.title;
+        document.title = `${post.title} - ${t('siteTitle')}`;
+
+        // 顯示封面圖片
+        if (post.cover_image_url) {
+          const heroImg = document.getElementById('heroCoverImg');
+          heroImg.src = post.cover_image_url;
+          heroImg.alt = post.title;
+          document.getElementById('heroCoverBox').classList.remove('hidden');
+        }
+
+        const editCatSelect = document.getElementById('editCategorySelect');
+        const editSubInput = document.getElementById('editSubcategoryInput');
+        const editSubList = document.getElementById('editSubList');
+        const editStatus = document.getElementById('editCategoryStatus');
+
+        editCatSelect.innerHTML = CATEGORIES.map(c => `<option value="${c.id}">${getCategoryLabel(c, uiLang)}</option>`).join('');
+        function updateEditSubList() {
+          const list = SUGGESTED_SUBCATEGORIES[editCatSelect.value] || [];
+          editSubList.innerHTML = list.map(n => `<option value="${n}"></option>`).join('');
+        }
+        editCatSelect.onchange = updateEditSubList;
 
         function renderHeader() {
           const cat = getCategoryById(post.category);
-          const sub = (post.subcategory || '').trim() || '未分類';
+          const catName = getCategoryLabel(cat, uiLang);
+          const sub = (post.subcategory || '').trim() || t('uncategorized');
+          const dateStr = new Date(post.created_at).toLocaleDateString(uiLang === 'en' ? 'en-US' : uiLang);
 
           document.getElementById('headerBox').innerHTML = `
-            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
               <div class="flex flex-wrap items-center gap-2">
-                <span class="text-xs px-2.5 py-1 rounded-full border ${cat.badgeClass}">${cat.icon} ${cat.name}</span>
-                <span class="text-xs bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-1 rounded-full"># ${sub}</span>
-                <span class="text-xs bg-slate-200 px-2 py-1 rounded">原文語系：${post.original_lang}</span>
-                <span class="text-xs text-slate-400 uppercase font-mono">${post.format}</span>
+                <span class="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full border ${cat.badgeClass}">
+                  ${icon(cat.iconKey, 'w-3.5 h-3.5')} ${escapeHtml(catName)}
+                </span>
+                <span class="text-xs bg-white border border-[#E4E0D6] text-stone-600 px-3 py-1 rounded-full">${escapeHtml(sub)}</span>
+                <span class="font-mono-meta text-[11px] text-stone-400 uppercase">${t('origLang')}: ${escapeHtml(post.original_lang)} · ${escapeHtml(post.format)} · ${dateStr}</span>
               </div>
               ${isAuthor ? `
                 <div class="flex items-center gap-2">
-                  <button id="toggleEditCatBtn" class="text-xs bg-indigo-50 text-indigo-700 border border-indigo-200 px-3 py-1 rounded-lg hover:bg-indigo-100">
-                    🏷️ 更改分類
+                  <button id="toggleEditCatBtn" class="inline-flex items-center gap-1.5 text-xs border border-[#D8D3C6] bg-white text-stone-700 px-3 py-1.5 rounded-full hover:bg-stone-900 hover:text-[#F6F4EF] transition">
+                    ${icon('tag', 'w-3.5 h-3.5')} <span>${t('editCategory')}</span>
                   </button>
-                  <button id="deletePostBtn" class="text-xs bg-red-50 text-red-600 border border-red-200 px-3 py-1 rounded-lg hover:bg-red-100">
-                    🗑️ 刪除文章
+                  <button id="deletePostBtn" class="inline-flex items-center gap-1.5 text-xs border border-red-200 bg-white text-red-700 px-3 py-1.5 rounded-full hover:bg-red-700 hover:text-white transition">
+                    ${icon('trash', 'w-3.5 h-3.5')} <span>${t('deletePost')}</span>
                   </button>
                 </div>
               ` : ''}
             </div>
-            <h1 class="text-3xl font-bold text-slate-900">${post.title}</h1>
+            <h1 class="font-serif-editorial text-3xl sm:text-5xl font-semibold text-stone-900 leading-tight">${escapeHtml(post.title)}</h1>
           `;
 
-          // 綁定開啟分類編輯面板
           document.getElementById('toggleEditCatBtn')?.addEventListener('click', () => {
             const panel = document.getElementById('editCategoryPanel');
             panel.classList.toggle('hidden');
             if (!panel.classList.contains('hidden')) {
               editCatSelect.value = post.category;
               updateEditSubList();
-              editSubInput.value = post.subcategory || '未分類';
+              editSubInput.value = post.subcategory || t('uncategorized');
               editStatus.textContent = '';
             }
           });
 
-          // 綁定刪除按鈕
           document.getElementById('deletePostBtn')?.addEventListener('click', async () => {
             if (!confirm(`確定要刪除「${post.title}」嗎？刪除後無法復原。`)) return;
             try {
               await deletePost(post.id, post.file_url);
-              alert('文章已刪除');
               window.location.href = './index.html';
             } catch (err) {
               alert(`刪除失敗：${err.message}`);
@@ -153,33 +181,16 @@
           });
         }
 
-        // 初始化分類修改面板控制項
-        const editCatSelect = document.getElementById('editCategorySelect');
-        const editSubInput = document.getElementById('editSubcategoryInput');
-        const editSubList = document.getElementById('editSubList');
-        const editStatus = document.getElementById('editCategoryStatus');
-
-        editCatSelect.innerHTML = CATEGORIES.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
-        function updateEditSubList() {
-          const list = SUGGESTED_SUBCATEGORIES[editCatSelect.value] || [];
-          editSubList.innerHTML = list.map(name => `<option value="${name}"></option>`).join('');
-        }
-        editCatSelect.onchange = updateEditSubList;
-
         document.getElementById('reAutoClassifyBtn').onclick = () => {
           const res = autoClassifyPost(post.title, post.raw_text || '');
           editCatSelect.value = res.category;
           updateEditSubList();
           editSubInput.value = res.subcategory;
-          editStatus.textContent = '✨ 已重新偵測，請按儲存分類';
+          editStatus.textContent = '已重新判斷，請點擊儲存';
         };
-
-        document.getElementById('cancelCategoryBtn').onclick = () => {
-          document.getElementById('editCategoryPanel').classList.add('hidden');
-        };
-
+        document.getElementById('cancelCategoryBtn').onclick = () => document.getElementById('editCategoryPanel').classList.add('hidden');
         document.getElementById('saveCategoryBtn').onclick = async () => {
-          editStatus.textContent = '儲存中...';
+          editStatus.textContent = '...';
           try {
             const updated = await updatePostCategory(post.id, editCatSelect.value, editSubInput.value);
             post.category = updated.category;
@@ -187,22 +198,27 @@
             renderHeader();
             document.getElementById('editCategoryPanel').classList.add('hidden');
           } catch (err) {
-            editStatus.textContent = `❌ 儲存失敗：${err.message}`;
+            editStatus.textContent = err.message;
           }
         };
 
         renderHeader();
         await renderPostContent(container, post);
 
-        // 若為 Markdown / LaTeX，顯示翻譯工具列
+        // 線上翻譯與雙語對照
         if (post.format === 'markdown' || post.format === 'latex') {
           document.getElementById('translateBar').classList.remove('hidden');
-          const defaultTarget = APP_CONFIG.LANGUAGES.find(l => l.code !== post.original_lang);
-          if (defaultTarget) targetLangSelect.value = defaultTarget.code;
+
+          // 若目前介面語系與原文不同，翻譯目標自動選取目前介面語系
+          if (uiLang !== post.original_lang) {
+            targetLangSelect.value = uiLang;
+          } else {
+            const fallback = APP_CONFIG.LANGUAGES.find(l => l.code !== post.original_lang);
+            if (fallback) targetLangSelect.value = fallback.code;
+          }
 
           let currentTranslatedText = null;
           let isBilingual = false;
-
           const layout = document.getElementById('viewerLayout');
           const transBox = document.getElementById('translatedContainer');
           const status = document.getElementById('translateStatus');
@@ -229,7 +245,7 @@
           }
 
           document.getElementById('translateBtn').onclick = async () => {
-            status.textContent = '翻譯中（已自動保護數學公式）...';
+            status.textContent = 'Translating...';
             try {
               const mode = document.getElementById('translateMode').value;
               const target = targetLangSelect.value;
@@ -237,16 +253,16 @@
               currentTranslatedText = text;
               bilingualBtn.classList.remove('hidden');
               resetBtn.classList.remove('hidden');
-              status.textContent = fromCache ? '⚡ 已從快取載入譯文' : '✅ 翻譯完成';
+              status.textContent = fromCache ? 'Cached' : 'Done';
               await refreshView();
             } catch (err) {
-              status.textContent = `❌ ${err.message}`;
+              status.textContent = err.message;
             }
           };
 
           bilingualBtn.onclick = async () => {
             isBilingual = !isBilingual;
-            bilingualBtn.textContent = isBilingual ? '切換單欄譯文' : '切換雙語對照';
+            bilingualBtn.innerHTML = `${icon('columns', 'w-3.5 h-3.5')} <span>${isBilingual ? t('bilingualOff') : t('bilingualOn')}</span>`;
             await refreshView();
           };
 
@@ -260,7 +276,7 @@
           };
         }
       } catch (err) {
-        container.innerHTML = `<p class="text-red-500">無法載入內容：${err.message}</p>`;
+        container.innerHTML = `<p class="text-red-700 text-sm">無法載入內容：${err.message}</p>`;
       }
     }
   </script>
