@@ -3,6 +3,7 @@ import { APP_CONFIG } from '../config/app.config.js';
 import { getCurrentUser, signOut } from '../modules/auth.module.js';
 import { getUiLang, setUiLang, t } from '../modules/i18n.module.js';
 import { icon } from '../modules/icons.module.js';
+import { translateCurrentPage, autoTranslateIfNeeded } from '../modules/translator.module.js';
 
 export async function mountNavbar(targetId = 'navbar') {
   const el = document.getElementById(targetId);
@@ -15,12 +16,11 @@ export async function mountNavbar(targetId = 'navbar') {
   const params = new URLSearchParams(window.location.search);
   const activeCat = params.get('cat');
   const isCompPage = path.includes('competition.html');
-  const isTranslatePage = path.includes('translate.html');
 
   el.innerHTML = `
     <header class="bg-[#F6F4EF]/95 backdrop-blur-md border-b border-[#E4E0D6] sticky top-0 z-50 shadow-sm">
       <div class="max-w-7xl mx-auto px-4 sm:px-5">
-        <!-- 第一列：品牌 + Google 站內搜尋 + 語系 + 登入/上傳 -->
+        <!-- 第一列：品牌 + Google 站內搜尋 + 右上角整頁翻譯選單 + 登入/上傳 -->
         <div class="h-14 flex items-center justify-between gap-3">
           <a href="./index.html" class="flex items-center gap-2.5 group shrink-0">
             <span class="w-8 h-8 rounded border border-stone-900/80 flex items-center justify-center text-stone-900 group-hover:bg-stone-900 group-hover:text-[#F6F4EF] transition">
@@ -36,9 +36,10 @@ export async function mountNavbar(targetId = 'navbar') {
                 class="bg-transparent text-xs text-stone-700 w-36 lg:w-48 focus:outline-none" />
             </form>
 
-            <div class="flex items-center gap-1 border border-[#DDD8CC] bg-white/80 rounded-full px-2 py-1 text-xs text-stone-600">
+            <!-- 右上角語系選單：點選後直接翻譯整頁（標記 data-no-translate 避免選項文字被改寫） -->
+            <div data-no-translate="true" class="flex items-center gap-1 border border-[#DDD8CC] bg-white/90 rounded-full px-2.5 py-1 text-xs text-stone-600 hover:border-stone-900 transition">
               ${icon('globe', 'w-3.5 h-3.5 text-stone-500')}
-              <select id="uiLangSwitcher" aria-label="Language" class="bg-transparent focus:outline-none cursor-pointer font-medium text-stone-700">
+              <select id="uiLangSwitcher" aria-label="整頁翻譯語系" class="bg-transparent focus:outline-none cursor-pointer font-medium text-stone-700">
                 ${APP_CONFIG.LANGUAGES.map(l => `
                   <option value="${l.code}" ${l.code === currentLang ? 'selected' : ''}>${l.short}</option>
                 `).join('')}
@@ -65,7 +66,7 @@ export async function mountNavbar(targetId = 'navbar') {
           </div>
         </div>
 
-        <!-- 第二列：高顯眼度類別與跨國翻譯快速導覽列 -->
+        <!-- 第二列：高顯眼度類別導覽列（已移除舊翻譯模組按鈕） -->
         <nav class="py-2.5 border-t border-[#E4E0D6]/80 flex items-center gap-2.5 overflow-x-auto no-scrollbar">
           <a href="./competition.html"
             class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold tracking-wide transition-all duration-200 whitespace-nowrap shadow-sm hover:-translate-y-0.5 hover:shadow
@@ -74,15 +75,6 @@ export async function mountNavbar(targetId = 'navbar') {
               : 'bg-[#2E4F3E]/12 text-[#2E4F3E] border border-[#2E4F3E]/35 hover:bg-[#2E4F3E] hover:text-white'}">
             ${icon('trophy', 'w-4 h-4')}
             <span>UTAR × 東海數學競賽</span>
-          </a>
-
-          <a href="./translate.html"
-            class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold tracking-wide transition-all duration-200 whitespace-nowrap shadow-sm hover:-translate-y-0.5 hover:shadow
-            ${isTranslatePage
-              ? 'bg-[#3B4252] text-white ring-2 ring-[#3B4252]/30'
-              : 'bg-[#3B4252]/10 text-[#3B4252] border border-[#3B4252]/30 hover:bg-[#3B4252] hover:text-white'}">
-            ${icon('globe', 'w-4 h-4')}
-            <span>跨國多語翻譯</span>
           </a>
 
           <a href="./index.html?cat=math"
@@ -105,7 +97,7 @@ export async function mountNavbar(targetId = 'navbar') {
 
           <a href="./index.html"
             class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 whitespace-nowrap
-            ${!isCompPage && !isTranslatePage && !activeCat
+            ${!isCompPage && !activeCat
               ? 'bg-stone-900 text-[#F6F4EF]'
               : 'bg-white text-stone-700 border border-[#D8D3C6] hover:bg-stone-900 hover:text-white'}">
             ${icon('grid', 'w-3.5 h-3.5')}
@@ -133,10 +125,15 @@ export async function mountNavbar(targetId = 'navbar') {
     window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank', 'noopener');
   });
 
-  document.getElementById('uiLangSwitcher')?.addEventListener('change', (e) => {
-    setUiLang(e.target.value);
-    window.location.reload();
+  // 右上角選單變更時：直接觸發整頁翻譯
+  document.getElementById('uiLangSwitcher')?.addEventListener('change', async (e) => {
+    const selectedLang = e.target.value;
+    setUiLang(selectedLang);
+    await translateCurrentPage(selectedLang);
   });
 
   document.getElementById('logoutBtn')?.addEventListener('click', signOut);
+
+  // 若先前已選取外語，待動態內容載入後自動翻譯整頁
+  autoTranslateIfNeeded(650);
 }
