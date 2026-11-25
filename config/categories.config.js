@@ -1,24 +1,46 @@
-// 網站主分類設定（預設：數學、人工智慧）
-// 新手擴充方式：直接複製其中一個 { ... } 區塊貼上即可新增分類
+// config/categories.config.js
 export const CATEGORIES = [
   {
     id: 'math',
-    name: '數學 (Mathematics)',
-    icon: '∑',
-    badgeClass: 'bg-blue-100 text-blue-800 border-blue-200',
-    description: '微積分、線性代數、機率統計與數學推導'
+    name: { 'zh-TW': '數學', 'en': 'Mathematics', 'ja': '数学' },
+    iconKey: 'math',
+    monogram: '∑',
+    badgeClass: 'text-[#1E3A5F] bg-[#1E3A5F]/8 border-[#1E3A5F]/20',
+    accentHex: '#1E3A5F',
+    description: {
+      'zh-TW': '微積分、線性代數、機率統計與數學推導',
+      'en': 'Calculus, Linear Algebra, Probability & Proofs',
+      'ja': '微分積分・線形代数・確率統計と数理証明'
+    }
   },
   {
     id: 'ai',
-    name: '人工智慧 (AI)',
-    icon: '🧠',
-    badgeClass: 'bg-purple-100 text-purple-800 border-purple-200',
-    description: '機器學習、深度學習、LLM 與演算法研究'
+    name: { 'zh-TW': '人工智慧', 'en': 'Artificial Intelligence', 'ja': '人工知能' },
+    iconKey: 'ai',
+    monogram: 'Φ',
+    badgeClass: 'text-[#7C3A2D] bg-[#7C3A2D]/8 border-[#7C3A2D]/20',
+    accentHex: '#7C3A2D',
+    description: {
+      'zh-TW': '機器學習、深度學習、LLM 與演算法研究',
+      'en': 'Machine Learning, Deep Learning, LLMs & Algorithms',
+      'ja': '機械学習・深層学習・LLMとアルゴリズム研究'
+    }
   }
 ];
 
 export function getCategoryById(id) {
   return CATEGORIES.find(c => c.id === id) || {
-    id, name: id, icon: '📄', badgeClass: 'bg-gray-100 text-gray-800 border-gray-200'
+    id,
+    name: { 'zh-TW': id, 'en': id, 'ja': id },
+    iconKey: 'grid',
+    monogram: '§',
+    badgeClass: 'text-stone-700 bg-stone-100 border-stone-200',
+    accentHex: '#57534E'
   };
+}
+
+export function getCategoryLabel(cat, lang = 'zh-TW') {
+  if (!cat) return '';
+  if (typeof cat.name === 'string') return cat.name;
+  return cat.name[lang] || cat.name['zh-TW'] || cat.id;
 }
