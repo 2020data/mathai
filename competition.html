@@ -11,7 +11,6 @@
 <body class="min-h-screen flex flex-col">
   <div id="navbar"></div>
 
-  <!-- 頂部：歷屆年份與各國獨立頁面導覽 -->
   <section class="border-b border-[#E4E0D6] bg-white/70">
     <div class="max-w-6xl mx-auto px-5 py-7 space-y-4">
       <div class="flex flex-wrap items-center justify-between gap-4">
@@ -26,7 +25,6 @@
         <div id="adminActionBar" class="hidden flex flex-wrap items-center gap-2"></div>
       </div>
 
-      <!-- 年份切換列 + 國家獨立頁面切換 -->
       <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[#E4E0D6]">
         <div class="flex flex-wrap items-center gap-2" id="yearTabs"></div>
         <div class="flex flex-wrap items-center gap-2" id="countryTabs"></div>
@@ -35,12 +33,10 @@
   </section>
 
   <main class="max-w-6xl w-full mx-auto px-5 py-8 flex-1">
-    <!-- 瀏覽檢視區 -->
     <div id="pageViewArea" class="space-y-6">
       <p class="text-stone-400 font-mono-meta text-xs text-center py-16">載入競賽年度資料中...</p>
     </div>
 
-    <!-- 編輯 / 新增年度頁面表單（登入後可開啟） -->
     <form id="editorForm" class="hidden bg-white rounded-lg border border-[#D8D3C6] p-6 sm:p-8 space-y-6">
       <div class="flex items-center justify-between pb-4 border-b border-[#E4E0D6]">
         <h2 id="editorHeading" class="font-serif-editorial text-2xl font-semibold text-stone-900">編輯年度競賽頁面</h2>
@@ -58,14 +54,14 @@
         </div>
         <div>
           <label class="block text-xs uppercase tracking-wider text-stone-500 mb-1">舉辦日期</label>
-          <input id="fDate" type="text" placeholder="例如：2025/07/12 - 07/14" class="w-full border border-[#DDD8CC] rounded px-3 py-2 text-sm" />
+          <input id="fDate" type="text" placeholder="例如：2026/07/18 - 07/20" class="w-full border border-[#DDD8CC] rounded px-3 py-2 text-sm" />
         </div>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label class="block text-xs uppercase tracking-wider text-stone-500 mb-1">年度主標題</label>
-          <input id="fTitle" type="text" required placeholder="例如：2025 東海大學 × UTAR 數學交流競賽（台灣場）" class="w-full border border-[#DDD8CC] rounded px-3 py-2 text-sm" />
+          <input id="fTitle" type="text" required placeholder="例如：2026 東海大學 × UTAR 數學交流競賽（台灣場）" class="w-full border border-[#DDD8CC] rounded px-3 py-2 text-sm" />
         </div>
         <div>
           <label class="block text-xs uppercase tracking-wider text-stone-500 mb-1">舉辦地點</label>
@@ -77,16 +73,17 @@
         <label class="block text-xs uppercase tracking-wider text-stone-500 mb-1">副標題 / 競賽標語</label>
         <input id="fSubtitle" type="text" class="w-full border border-[#DDD8CC] rounded px-3 py-2 text-sm" />
       </div>
+
       <div>
         <label class="block text-xs uppercase tracking-wider text-stone-500 mb-1">創作者 / 編輯者（選填，可留空）</label>
         <input id="fCreator" type="text" placeholder="例如：2026 東海場網站維護組（留空則不顯示）" class="w-full border border-[#DDD8CC] rounded px-3 py-2 text-sm" />
       </div>
+
       <div>
         <label class="block text-xs uppercase tracking-wider text-stone-500 mb-1">主視覺宣傳海報連結（外部免費圖床網址）</label>
         <input id="fCover" type="url" placeholder="https://..." class="w-full border border-[#DDD8CC] rounded px-3 py-2 text-sm" />
       </div>
 
-      <!-- 宣傳與外部照片清單 -->
       <div class="p-4 rounded bg-[#F6F4EF] border border-[#E4E0D6] space-y-3">
         <div class="flex items-center justify-between">
           <label class="text-xs font-semibold uppercase tracking-wider text-stone-700">宣傳照片與外部相簿連結</label>
@@ -97,27 +94,23 @@
 
       <div>
         <label class="block text-xs uppercase tracking-wider text-stone-500 mb-1">子頁 1：競賽資訊與內容（支援 Markdown / LaTeX）</label>
-        <textarea id="fOverview" rows="6" class="w-full border border-[#DDD8CC] rounded p-3 font-mono-meta text-xs"
-          placeholder="## 競賽宗旨&#10;填寫活動簡介、賽制說明與重要時程..."></textarea>
+        <textarea id="fOverview" rows="6" class="w-full border border-[#DDD8CC] rounded p-3 font-mono-meta text-xs"></textarea>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label class="block text-xs uppercase tracking-wider text-stone-500 mb-1">子頁 2：委員會名單（Markdown）</label>
-          <textarea id="fCommittee" rows="6" class="w-full border border-[#DDD8CC] rounded p-3 font-mono-meta text-xs"
-            placeholder="### 指導委員會&#10;- 主任委員：...&#10;- 命題委員：..."></textarea>
+          <textarea id="fCommittee" rows="6" class="w-full border border-[#DDD8CC] rounded p-3 font-mono-meta text-xs"></textarea>
         </div>
         <div>
           <label class="block text-xs uppercase tracking-wider text-stone-500 mb-1">子頁 3：工作人員與志工（Markdown）</label>
-          <textarea id="fStaff" rows="6" class="w-full border border-[#DDD8CC] rounded p-3 font-mono-meta text-xs"
-            placeholder="### 執行團隊&#10;- 總召：...&#10;- 攝影與美宣：..."></textarea>
+          <textarea id="fStaff" rows="6" class="w-full border border-[#DDD8CC] rounded p-3 font-mono-meta text-xs"></textarea>
         </div>
       </div>
 
-      <!-- 動態切分額外子頁面（避免單頁資訊過多） -->
       <div class="p-4 rounded bg-[#F6F4EF] border border-[#E4E0D6] space-y-3">
         <div class="flex items-center justify-between">
-          <label class="text-xs font-semibold uppercase tracking-wider text-stone-700">額外切分子頁面（資訊過多時新增，例如：賽程表、得獎名單、歷屆題目）</label>
+          <label class="text-xs font-semibold uppercase tracking-wider text-stone-700">額外切分子頁面（資訊過多時新增）</label>
           <button type="button" id="addSubpageRowBtn" class="text-xs border border-stone-900 px-2.5 py-1 rounded-full hover:bg-stone-900 hover:text-white transition">+ 新增子頁面</button>
         </div>
         <div id="subpageRows" class="space-y-3"></div>
@@ -141,13 +134,18 @@
     import { mountShareBar } from './modules/share.module.js';
     import { icon } from './modules/icons.module.js';
 
+    const DEFAULT_COUNTRIES = [
+      { code: 'TW', name: '台灣・東海大學', shortName: '台灣 (東海)' },
+      { code: 'MY', name: '馬來西亞・拉曼大學 (UTAR)', shortName: '馬來西亞 (UTAR)' }
+    ];
+
     function esc(s) {
       return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
     mountNavbar();
 
-    const countries = APP_CONFIG.COMPETITION_COUNTRIES;
+    const countries = APP_CONFIG.COMPETITION_COUNTRIES || DEFAULT_COUNTRIES;
     document.getElementById('fCountry').innerHTML = countries.map(c => `<option value="${c.code}">${c.name}</option>`).join('');
 
     const params = new URLSearchParams(window.location.search);
@@ -234,7 +232,7 @@
       document.getElementById('openNewBtn').onclick = () => openEditor(null);
       document.getElementById('openEditBtn')?.addEventListener('click', () => openEditor(currentRecord));
       document.getElementById('cloneNextBtn')?.addEventListener('click', async () => {
-        if (!confirm(`確定要將 ${currentRecord.year} 年（${currentRecord.country}）的架構、委員會與子頁面延續複製到 ${currentRecord.year + 1} 年嗎？`)) return;
+        if (!confirm(`確定要將 ${currentRecord.year} 年（${currentRecord.country}）延續複製到 ${currentRecord.year + 1} 年嗎？`)) return;
         try {
           const created = await cloneCompetitionToNextYear(currentRecord);
           allRecords.unshift(created);
@@ -243,7 +241,7 @@
           activeTab = 'overview';
           updateUrl(activeYear, activeCountry, activeTab);
           renderAll();
-          alert(`已成功延續建立 ${created.year} 年頁面！現在您可以點選「編輯本頁」更新新年度日期與照片。`);
+          alert(`已成功延續建立 ${created.year} 年頁面！`);
         } catch (err) {
           alert(err.message);
         }
@@ -272,7 +270,6 @@
 
       document.title = `${record.title} | ${countryObj.shortName}`;
 
-      // 整理所有子頁面清單（固定 3 大類 + 自訂子頁面）
       const extraSubs = Array.isArray(record.extra_subpages) ? record.extra_subpages : [];
       const tabs = [
         { id: 'overview', label: '競賽資訊與內容' },
@@ -327,7 +324,6 @@
       }
 
       area.innerHTML = `
-        <!-- 頁面標頭與主視覺 -->
         <div class="bg-white rounded-lg border border-[#E4E0D6] overflow-hidden">
           ${record.cover_image_url ? `
             <div class="w-full max-h-[380px] overflow-hidden border-b border-[#E4E0D6] bg-stone-100">
@@ -344,12 +340,11 @@
             <h2 class="font-serif-editorial text-3xl sm:text-4xl font-semibold text-stone-900">${esc(record.title)}</h2>
             ${record.subtitle ? `<p class="text-stone-600 text-sm sm:text-base">${esc(record.subtitle)}</p>` : ''}
             ${record.creator_name ? `<p class="text-xs font-mono-meta text-stone-500">創作者 / 編輯者：${esc(record.creator_name)}</p>` : ''}
-            <!-- 社群分享列：FB / IG / WhatsApp / LINE -->
+
             <div id="compShareBar" class="pt-4 border-t border-[#F0EDE6]"></div>
           </div>
         </div>
 
-        <!-- 子頁面切換列 -->
         <div class="flex flex-wrap gap-2 border-b border-[#E4E0D6] pb-3" id="subpageTabs">
           ${tabs.map(t => `
             <button data-tab="${esc(t.id)}" class="px-4 py-2 rounded-full text-xs font-medium transition
@@ -359,7 +354,6 @@
           `).join('')}
         </div>
 
-        <!-- 子頁面呈現內容 -->
         <article class="bg-white rounded-lg border border-[#E4E0D6] p-6 sm:p-10">
           ${bodyHtml}
         </article>
@@ -379,7 +373,6 @@
       });
     }
 
-    // === 編輯器動態欄位（照片列與自訂子頁面） ===
     function appendGalleryRow(item = { url: '', caption: '', external_link: '' }) {
       const row = document.createElement('div');
       row.className = 'grid grid-cols-1 sm:grid-cols-12 gap-2 items-center bg-white p-2.5 rounded border border-[#E4E0D6]';
@@ -398,7 +391,7 @@
       row.className = 'bg-white p-3 rounded border border-[#E4E0D6] space-y-2';
       row.innerHTML = `
         <div class="flex items-center gap-2">
-          <input type="text" data-k="title" value="${esc(sub.title)}" placeholder="子頁面標題（例如：2025 賽程表 / 得獎名單）" class="flex-1 border border-[#DDD8CC] rounded px-2.5 py-1.5 text-xs" />
+          <input type="text" data-k="title" value="${esc(sub.title)}" placeholder="子頁面標題" class="flex-1 border border-[#DDD8CC] rounded px-2.5 py-1.5 text-xs" />
           <input type="text" data-k="id" value="${esc(sub.id)}" placeholder="網址代號（英文，如 schedule）" class="w-40 border border-[#DDD8CC] rounded px-2.5 py-1.5 text-xs font-mono-meta" />
           <button type="button" class="text-xs text-red-600 hover:underline">移除</button>
         </div>
@@ -420,13 +413,14 @@
       document.getElementById('fCountry').value = record?.country || activeCountry;
       document.getElementById('fTitle').value = record?.title || '';
       document.getElementById('fSubtitle').value = record?.subtitle || '';
+      document.getElementById('fCreator').value = record?.creator_name || '';
       document.getElementById('fDate').value = record?.event_date || '';
       document.getElementById('fLocation').value = record?.location || '';
       document.getElementById('fCover').value = record?.cover_image_url || '';
       document.getElementById('fOverview').value = record?.overview_md || '';
       document.getElementById('fCommittee').value = record?.committee_md || '';
       document.getElementById('fStaff').value = record?.staff_md || '';
-      document.getElementById('fCreator').value = record?.creator_name || '';
+
       document.getElementById('galleryRows').innerHTML = '';
       (record?.gallery_items || []).forEach(appendGalleryRow);
 
@@ -462,6 +456,7 @@
           country: document.getElementById('fCountry').value,
           title: document.getElementById('fTitle').value,
           subtitle: document.getElementById('fSubtitle').value,
+          creator_name: document.getElementById('fCreator').value.trim() || null,
           event_date: document.getElementById('fDate').value,
           location: document.getElementById('fLocation').value,
           cover_image_url: document.getElementById('fCover').value,
@@ -469,7 +464,6 @@
           overview_md: document.getElementById('fOverview').value,
           committee_md: document.getElementById('fCommittee').value,
           staff_md: document.getElementById('fStaff').value,
-          creator_name: document.getElementById('fCreator').value.trim() || null,
           extra_subpages
         });
 
@@ -496,11 +490,14 @@
     }
 
     try {
-      [allRecords, currentUser] = await Promise.all([fetchAllCompetitions(), getCurrentUser()]);
+      [allRecords, currentUser] = await Promise.all([
+        fetchAllCompetitions(),
+        getCurrentUser().catch(() => null)
+      ]);
       renderAll();
     } catch (err) {
       document.getElementById('pageViewArea').innerHTML =
-        `<p class="text-red-700 text-sm text-center py-12">載入失敗：${err.message}（請確認已在 Supabase 建立 competitions 資料表）</p>`;
+        `<p class="text-red-700 text-sm text-center py-12">載入失敗：${err.message}</p>`;
     }
   </script>
 </body>
