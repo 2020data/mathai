@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>跨國多語言翻譯中心 | International Translation Hub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+  <link rel="stylesheet" href="./styles/editorial.css" />
+  <style>
+    @media print {
+      #navbar, #controlPanel, #shareSection, .no-print { display: none !important; }
+      body { background: #fff !important; }
+      #resultLayout { display: block !important; }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+  <div id="navbar"></div>
+
+  <!-- 頁首介紹 -->
+  <section class="border-b border-[#E4E0D6] bg-white/40 no-print">
+    <div class="max-w-7xl mx-auto px-5 py-8 sm:py-10">
+      <p class="font-mono-meta text-[11px] uppercase tracking-[0.2em] text-stone-500 mb-2">
+        INTERNATIONAL MULTI-LANGUAGE TRANSLATION HUB
+      </p>
+      <h1 class="font-serif-editorial text-3xl sm:text-4xl font-semibold text-stone-900 leading-tight mb-2">
+        跨國多語言翻譯頁面
+      </h1>
+      <p class="text-sm text-stone-600 max-w-3xl leading-relaxed">
+        支援台灣、馬來西亞（UTAR）與國際讀者即時翻譯站內典藏文章、歷年數學競賽頁面或研究文稿，自動保護 LaTeX 數學公式，並產生專屬語系連結供跨國分享。
+      </p>
+    </div>
+  </section>
+
+  <main class="max-w-7xl w-full mx-auto px-5 py-8 flex-1 space-y-6">
+    <!-- 控制面板 -->
+    <section id="controlPanel" class="bg-white border border-[#E4E0D6] rounded-xl p-5 sm:p-6 space-y-5 shadow-sm">
+      <!-- 1. 來源模式切換 -->
+      <div class="flex flex-wrap items-center gap-2 border-b border-[#F0EDE6] pb-4">
+        <span class="text-xs font-mono-meta uppercase tracking-wider text-stone-500 mr-2">翻譯來源</span>
+        <button type="button" data-source-tab="post"
+          class="source-tab px-4 py-1.5 rounded-full text-xs font-medium border transition">
+          典藏文章（數學 / AI / 競賽筆記）
+        </button>
+        <button type="button" data-source-tab="competition"
+          class="source-tab px-4 py-1.5 rounded-full text-xs font-medium border transition">
+          UTAR × 東海競賽年度頁面
+        </button>
+        <button type="button" data-source-tab="custom"
+          class="source-tab px-4 py-1.5 rounded-full text-xs font-medium border transition">
+          自由貼上跨國文件 / 公式
+        </button>
+      </div>
+
+      <!-- 2A. 選擇典藏文章 -->
+      <div id="panelPost" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="md:col-span-2">
+          <label class="block text-xs font-medium text-stone-500 mb-1.5">選擇要翻譯的站內文章（僅列出支援即時翻譯之文字稿件）</label>
+          <select id="postSelect" class="w-full border border-[#DDD8CC] rounded-lg px-3 py-2 text-sm bg-[#FAF9F5]">
+            <option value="">載入文章清單中...</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-stone-500 mb-1.5">原文語系</label>
+          <input id="postOrigLang" type="text" readonly
+            class="w-full border border-[#E4E0D6] rounded-lg px-3 py-2 text-sm bg-stone-50 text-stone-500 font-mono-meta" value="—" />
+        </div>
+      </div>
+
+      <!-- 2B. 選擇競賽年度頁面 -->
+      <div id="panelCompetition" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="md:col-span-2">
+          <label class="block text-xs font-medium text-stone-500 mb-1.5">選擇歷年國家競賽獨立頁（將一併翻譯總覽、委員會與工作人員）</label>
+          <select id="compSelect" class="w-full border border-[#DDD8CC] rounded-lg px-3 py-2 text-sm bg-[#FAF9F5]">
+            <option value="">載入競賽頁面中...</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-stone-500 mb-1.5">推測原文語系</label>
+          <select id="compSourceLang" class="w-full border border-[#DDD8CC] rounded-lg px-3 py-2 text-sm bg-white"></select>
+        </div>
+      </div>
+
+      <!-- 2C. 自由貼上跨國文本 -->
+      <div id="panelCustom" class="hidden space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-stone-500 mb-1.5">文件標題（選填）</label>
+            <input id="customTitle" type="text" placeholder="例如：2026 UTAR × THU 邀請函 / 數學證明筆記"
+              class="w-full border border-[#DDD8CC] rounded-lg px-3 py-2 text-sm bg-white" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-stone-500 mb-1.5">原文語系</label>
+            <select id="customSourceLang" class="w-full border border-[#DDD8CC] rounded-lg px-3 py-2 text-sm bg-white"></select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-stone-500 mb-1.5">貼上 Markdown / LaTeX 內容（自動保護 $...$ 與 $$...$$ 公式）</label>
+          <textarea id="customText" rows="6"
+            class="w-full border border-[#DDD8CC] rounded-lg p-3 text-sm font-mono bg-[#FAF9F5]"
+            placeholder="請貼上需要跨國翻譯的公告、賽程或數學內容...&#10;&#10;例如：$$\int_0^\infty e^{-x^2} dx = \frac{\sqrt{\pi}}{2}$$"></textarea>
+        </div>
+      </div>
+
+      <!-- 3. 目標語系與翻譯引擎控制列 -->
+      <div class="pt-3 border-t border-[#F0EDE6] space-y-3">
+        <!-- 常用跨國語系快速點選膠囊 -->
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <span class="text-stone-500 font-mono-meta">常用跨國語系：</span>
+          <button type="button" data-quick-lang="en" class="quick-lang px-3 py-1 rounded-full border border-[#DDD8CC] hover:bg-stone-900 hover:text-white transition">English</button>
+          <button type="button" data-quick-lang="ms" class="quick-lang px-3 py-1 rounded-full border border-[#DDD8CC] hover:bg-stone-900 hover:text-white transition">Bahasa Melayu (馬來文)</button>
+          <button type="button" data-quick-lang="zh-TW" class="quick-lang px-3 py-1 rounded-full border border-[#DDD8CC] hover:bg-stone-900 hover:text-white transition">繁體中文</button>
+          <button type="button" data-quick-lang="zh-CN" class="quick-lang px-3 py-1 rounded-full border border-[#DDD8CC] hover:bg-stone-900 hover:text-white transition">简体中文</button>
+          <button type="button" data-quick-lang="ja" class="quick-lang px-3 py-1 rounded-full border border-[#DDD8CC] hover:bg-stone-900 hover:text-white transition">日本語</button>
+          <button type="button" data-quick-lang="ko" class="quick-lang px-3 py-1 rounded-full border border-[#DDD8CC] hover:bg-stone-900 hover:text-white transition">한국어</button>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3 pt-1">
+          <div class="flex items-center gap-2">
+            <label for="targetLang" class="text-xs font-medium text-stone-600">目標語言：</label>
+            <select id="targetLang" class="border border-[#DDD8CC] rounded-lg px-3 py-2 text-xs bg-[#F6F4EF] font-medium"></select>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <label for="translateMode" class="text-xs font-medium text-stone-600">翻譯引擎：</label>
+            <select id="translateMode" class="border border-[#DDD8CC] rounded-lg px-3 py-2 text-xs bg-[#F6F4EF]">
+              <option value="free">免費線上翻譯（免設定直接用）</option>
+              <option value="cloud">雲端 AI 翻譯（Supabase Edge Function）</option>
+              <option value="local">地端本機 API（Localhost）</option>
+            </select>
+          </div>
+
+          <button id="runTranslateBtn" type="button"
+            class="inline-flex items-center gap-1.5 bg-stone-900 text-[#F6F4EF] px-5 py-2 rounded-full text-xs font-medium hover:bg-stone-700 transition">
+            <span id="btnGlobeIcon"></span>
+            <span>立即產生跨國譯文</span>
+          </button>
+
+          <button id="toggleBilingualBtn" type="button"
+            class="hidden inline-flex items-center gap-1.5 border border-[#D8D3C6] bg-white text-stone-700 px-4 py-2 rounded-full text-xs hover:bg-[#F6F4EF] transition">
+          </button>
+
+          <button id="exportMdBtn" type="button"
+            class="hidden border border-[#D8D3C6] bg-white text-stone-700 px-3.5 py-2 rounded-full text-xs hover:bg-[#F6F4EF] transition">
+            下載譯文 (.md)
+          </button>
+
+          <button id="printBtn" type="button"
+            class="hidden border border-[#D8D3C6] bg-white text-stone-700 px-3.5 py-2 rounded-full text-xs hover:bg-[#F6F4EF] transition">
+            列印 / 存成 PDF
+          </button>
+
+          <span id="statusText" class="font-mono-meta text-xs text-stone-500 ml-auto"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 專屬跨國語系分享列（翻譯後顯示） -->
+    <section id="shareSection" class="hidden bg-white/80 border border-[#E4E0D6] rounded-xl px-5 py-3.5 flex flex-wrap items-center justify-between gap-3">
+      <div class="text-xs text-stone-600">
+        <span class="font-semibold text-stone-800">跨國直連分享：</span>
+        <span>透過以下按鈕分享，海外讀者開啟後將自動呈現目前所選語言版本。</span>
+      </div>
+      <div id="shareBarContainer"></div>
+    </section>
+
+    <!-- 翻譯結果呈現區（支援單欄譯文與左右雙語對照） -->
+    <section id="resultLayout" class="grid grid-cols-1 gap-6">
+      <article id="translatedBox" class="editorial-prose bg-white p-7 sm:p-10 rounded-xl border border-[#E4E0D6] min-h-[240px]">
+        <p class="text-stone-400 text-sm text-center py-12">
+          請於上方選擇站內文章、競賽頁面或貼上文本，點擊「立即產生跨國譯文」即可預覽並分享。
+        </p>
+      </article>
+      <article id="originalBox" class="hidden editorial-prose bg-[#FAF9F5] p-7 sm:p-10 rounded-xl border border-[#D8D3C6]"></article>
+    </section>
+  </main>
+
+  <script type="module">
+    import { mountNavbar } from './components/navbar.js';
+    import { APP_CONFIG } from './config/app.config.js';
+    import { fetchPosts } from './modules/db.module.js';
+    import { fetchAllCompetitions } from './modules/competition.module.js';
+    import { parseMarkdownWithMath } from './modules/parser.module.js';
+    import { translatePost, translateRawText } from './modules/translator.module.js';
+    import { mountShareBar } from './modules/share.module.js';
+    import { icon } from './modules/icons.module.js';
+
+    mountNavbar();
+    document.getElementById('btnGlobeIcon').innerHTML = icon('globe', 'w-3.5 h-3.5');
+
+    const langList = APP_CONFIG.TRANSLATE_LANGUAGES || APP_CONFIG.LANGUAGES;
+    const langOptionsHtml = langList
+      .map(l => `<option value="${l.code}">${l.label}${l.region ? ` — ${l.region}` : ''}</option>`)
+      .join('');
+
+    const targetLangEl = document.getElementById('targetLang');
+    const compSourceLangEl = document.getElementById('compSourceLang');
+    const customSourceLangEl = document.getElementById('customSourceLang');
+    targetLangEl.innerHTML = langOptionsHtml;
+    compSourceLangEl.innerHTML = langOptionsHtml;
+    customSourceLangEl.innerHTML = langOptionsHtml;
+    targetLangEl.value = 'en';
+    compSourceLangEl.value = 'zh-TW';
+    customSourceLangEl.value = 'zh-TW';
+
+    let activeTab = 'post';
+    let postsCache = [];
+    let compsCache = [];
+    let isBilingual = true; // 預設開啟左右雙語對照，方便跨國校對
+    let lastTranslatedMd = '';
+    let lastOriginalMd = '';
+    let lastTitle = 'translated-document';
+
+    const statusEl = document.getElementById('statusText');
+    const resultLayout = document.getElementById('resultLayout');
+    const translatedBox = document.getElementById('translatedBox');
+    const originalBox = document.getElementById('originalBox');
+    const toggleBilingualBtn = document.getElementById('toggleBilingualBtn');
+    const exportMdBtn = document.getElementById('exportMdBtn');
+    const printBtn = document.getElementById('printBtn');
+    const shareSection = document.getElementById('shareSection');
+
+    function setTab(tab) {
+      activeTab = tab;
+      document.querySelectorAll('.source-tab').forEach(btn => {
+        const isActive = btn.dataset.sourceTab === tab;
+        btn.className = `source-tab px-4 py-1.5 rounded-full text-xs font-medium border transition ${
+          isActive
+            ? 'bg-stone-900 text-[#F6F4EF] border-stone-900'
+            : 'bg-white text-stone-600 border-[#DDD8CC] hover:bg-[#F6F4EF]'
+        }`;
+      });
+      document.getElementById('panelPost').classList.toggle('hidden', tab !== 'post');
+      document.getElementById('panelCompetition').classList.toggle('hidden', tab !== 'competition');
+      document.getElementById('panelCustom').classList.toggle('hidden', tab !== 'custom');
+    }
+
+    document.querySelectorAll('.source-tab').forEach(btn => {
+      btn.addEventListener('click', () => setTab(btn.dataset.sourceTab));
+    });
+
+    document.querySelectorAll('.quick-lang').forEach(btn => {
+      btn.addEventListener('click', () => {
+        targetLangEl.value = btn.dataset.quickLang;
+      });
+    });
+
+    function buildCompetitionMarkdown(comp) {
+      const parts = [
+        `# ${comp.title}`,
+        comp.subtitle ? `> ${comp.subtitle}` : '',
+        comp.event_date || comp.location
+          ? `**日期 / Date:** ${comp.event_date || '—'}  \n**地點 / Location:** ${comp.location || '—'}`
+          : '',
+        comp.overview_md ? `## 活動總覽與資訊\n\n${comp.overview_md}` : '',
+        comp.committee_md ? `## 委員會名單\n\n${comp.committee_md}` : '',
+        comp.staff_md ? `## 工作人員\n\n${comp.staff_md}` : ''
+      ];
+
+      if (Array.isArray(comp.extra_subpages)) {
+        for (const sp of comp.extra_subpages) {
+          if (sp?.title || sp?.content_md) {
+            parts.push(`## ${sp.title || '子頁面'}\n\n${sp.content_md || ''}`);
+          }
+        }
+      }
+      return parts.filter(Boolean).join('\n\n---\n\n');
+    }
+
+    function renderResultViews(targetLang) {
+      const langObj = langList.find(l => l.code === targetLang);
+      const langLabel = langObj ? langObj.label : targetLang;
+
+      const transHeader = `<div class="mb-5 pb-3 border-b border-[#E4E0D6] flex items-center justify-between">
+        <span class="font-mono-meta text-[11px] uppercase tracking-wider text-[#1E3A5F] font-semibold">譯文 · ${langLabel}</span>
+      </div>`;
+      const origHeader = `<div class="mb-5 pb-3 border-b border-[#D8D3C6] flex items-center justify-between">
+        <span class="font-mono-meta text-[11px] uppercase tracking-wider text-stone-500 font-semibold">原文對照 (Original)</span>
+      </div>`;
+
+      translatedBox.innerHTML = transHeader + parseMarkdownWithMath(lastTranslatedMd);
+      originalBox.innerHTML = origHeader + parseMarkdownWithMath(lastOriginalMd);
+
+      if (isBilingual) {
+        resultLayout.className = 'grid grid-cols-1 lg:grid-cols-2 gap-6';
+        originalBox.classList.remove('hidden');
+        toggleBilingualBtn.innerHTML = `${icon('columns', 'w-3.5 h-3.5')} <span>切換單欄譯文</span>`;
+      } else {
+        resultLayout.className = 'grid grid-cols-1 gap-6';
+        originalBox.classList.add('hidden');
+        toggleBilingualBtn.innerHTML = `${icon('columns', 'w-3.5 h-3.5')} <span>開啟左右雙語對照</span>`;
+      }
+
+      toggleBilingualBtn.classList.remove('hidden');
+      exportMdBtn.classList.remove('hidden');
+      printBtn.classList.remove('hidden');
+    }
+
+    async function executeTranslation() {
+      const mode = document.getElementById('translateMode').value;
+      const targetLang = targetLangEl.value;
+      statusEl.textContent = '跨國翻譯處理中（已自動保護數學公式）...';
+
+      try {
+        let shareUrl = new URL(window.location.href);
+        shareUrl.search = '';
+
+        if (activeTab === 'post') {
+          const postId = document.getElementById('postSelect').value;
+          const post = postsCache.find(p => p.id === postId);
+          if (!post) throw new Error('請先選擇一篇文章');
+
+          lastTitle = `${post.title}_${targetLang}`;
+          lastOriginalMd = `# ${post.title}\n\n${post.raw_text || ''}`;
+
+          const [titleRes, bodyRes] = await Promise.all([
+            translateRawText(post.title, {
+              sourceLang: post.original_lang || 'zh-TW',
+              targetLang,
+              mode,
+              cacheKey: `post_title_${post.id}`
+            }),
+            translatePost(post, targetLang, mode)
+          ]);
+
+          lastTranslatedMd = `# ${titleRes.text}\n\n${bodyRes.text}`;
+          shareUrl.searchParams.set('type', 'post');
+          shareUrl.searchParams.set('id', post.id);
+          shareUrl.searchParams.set('lang', targetLang);
+
+          statusEl.textContent = bodyRes.fromCache ? '⚡ 已從快取載入譯文' : '✅ 翻譯完成';
+
+        } else if (activeTab === 'competition') {
+          const compId = document.getElementById('compSelect').value;
+          const comp = compsCache.find(c => c.id === compId);
+          if (!comp) throw new Error('請先選擇一個競賽年度頁面');
+
+          const srcLang = compSourceLangEl.value;
+          lastTitle = `${comp.year}_${comp.country}_${targetLang}`;
+          lastOriginalMd = buildCompetitionMarkdown(comp);
+
+          const res = await translateRawText(lastOriginalMd, {
+            sourceLang: srcLang,
+            targetLang,
+            mode,
+            cacheKey: `comp_${comp.id}`
+          });
+
+          lastTranslatedMd = res.text;
+          shareUrl.searchParams.set('type', 'competition');
+          shareUrl.searchParams.set('year', comp.year);
+          shareUrl.searchParams.set('country', comp.country);
+          shareUrl.searchParams.set('lang', targetLang);
+
+          statusEl.textContent = res.fromCache ? '⚡ 已從快取載入競賽譯文' : '✅ 競賽頁面翻譯完成';
+
+        } else {
+          const customTitle = document.getElementById('customTitle').value.trim();
+          const customText = document.getElementById('customText').value.trim();
+          if (!customText) throw new Error('請貼上要翻譯的內容');
+
+          const srcLang = customSourceLangEl.value;
+          lastTitle = `${customTitle || 'document'}_${targetLang}`;
+          lastOriginalMd = customTitle ? `# ${customTitle}\n\n${customText}` : customText;
+
+          const res = await translateRawText(lastOriginalMd, {
+            sourceLang: srcLang,
+            targetLang,
+            mode
+          });
+
+          lastTranslatedMd = res.text;
+          statusEl.textContent = '✅ 翻譯完成';
+        }
+
+        // 更新網址列（若為文章或競賽頁，方便直接複製網址分享）
+        if (activeTab !== 'custom') {
+          window.history.replaceState({}, '', shareUrl.toString());
+          shareSection.classList.remove('hidden');
+          mountShareBar(document.getElementById('shareBarContainer'), {
+            title: `[${targetLang}] ${lastTitle}`,
+            url: shareUrl.toString()
+          });
+        } else {
+          shareSection.classList.add('hidden');
+        }
+
+        renderResultViews(targetLang);
+      } catch (err) {
+        statusEl.textContent = `❌ ${err.message}`;
+      }
+    }
+
+    document.getElementById('runTranslateBtn').addEventListener('click', executeTranslation);
+
+    toggleBilingualBtn.addEventListener('click', () => {
+      isBilingual = !isBilingual;
+      renderResultViews(targetLangEl.value);
+    });
+
+    exportMdBtn.addEventListener('click', () => {
+      const blob = new Blob([lastTranslatedMd], { type: 'text/markdown;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${lastTitle.replace(/[\\/:*?"<>|]/g, '_')}.md`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+
+    printBtn.addEventListener('click', () => window.print());
+
+    // 初始化載入資料庫文章與競賽頁面清單
+    async function init() {
+      setTab('post');
+      try {
+        const [posts, comps] = await Promise.all([
+          fetchPosts('all').catch(() => []),
+          fetchAllCompetitions().catch(() => [])
+        ]);
+
+        postsCache = posts.filter(p => p.raw_text && (p.format === 'markdown' || p.format === 'latex'));
+        compsCache = comps;
+
+        const postSelect = document.getElementById('postSelect');
+        if (postsCache.length) {
+          postSelect.innerHTML = postsCache
+            .map(p => `<option value="${p.id}">[${p.original_lang}] ${p.title}</option>`)
+            .join('');
+          document.getElementById('postOrigLang').value = postsCache[0].original_lang || 'zh-TW';
+        } else {
+          postSelect.innerHTML = `<option value="">目前尚無可翻譯的 Markdown / LaTeX 文章</option>`;
+        }
+
+        postSelect.addEventListener('change', () => {
+          const selected = postsCache.find(p => p.id === postSelect.value);
+          document.getElementById('postOrigLang').value = selected?.original_lang || '—';
+        });
+
+        const compSelect = document.getElementById('compSelect');
+        if (compsCache.length) {
+          compSelect.innerHTML = compsCache
+            .map(c => `<option value="${c.id}">${c.year} [${c.country}] ${c.title}</option>`)
+            .join('');
+        } else {
+          compSelect.innerHTML = `<option value="">目前尚無競賽年度頁面</option>`;
+        }
+
+        // 支援跨國分享網址自動帶入並直接翻譯
+        const params = new URLSearchParams(window.location.search);
+        const type = params.get('type');
+        const lang = params.get('lang');
+        if (lang && langList.some(l => l.code === lang)) {
+          targetLangEl.value = lang;
+        }
+
+        if (type === 'post' && params.get('id')) {
+          setTab('post');
+          postSelect.value = params.get('id');
+          postSelect.dispatchEvent(new Event('change'));
+          if (lang) await executeTranslation();
+        } else if (type === 'competition' && params.get('year') && params.get('country')) {
+          setTab('competition');
+          const match = compsCache.find(
+            c => String(c.year) === params.get('year') && c.country === params.get('country')
+          );
+          if (match) {
+            compSelect.value = match.id;
+            if (lang) await executeTranslation();
+          }
+        }
+      } catch (err) {
+        statusEl.textContent = `初始化失敗：${err.message}`;
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
