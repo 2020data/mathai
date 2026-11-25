@@ -37,6 +37,8 @@ export async function upsertCompetitionPage(payload) {
     event_date: (payload.event_date || '').trim(),
     location: (payload.location || '').trim(),
     cover_image_url: (payload.cover_image_url || '').trim() || null,
+     // 加在 upsertCompetitionPage 的 record 物件內：
+    creator_name: (payload.creator_name || '').trim() || null,
     gallery_items: Array.isArray(payload.gallery_items) ? payload.gallery_items : [],
     overview_md: payload.overview_md || '',
     committee_md: payload.committee_md || '',
